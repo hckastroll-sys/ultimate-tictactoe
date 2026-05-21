@@ -12,10 +12,17 @@ export function getSupabase() {
   return _supabase;
 }
 
+function makeUUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
 export function getPlayerId() {
   let id = localStorage.getItem("uttt-player-id");
   if (!id) {
-    id = crypto.randomUUID();
+    id = makeUUID();
     localStorage.setItem("uttt-player-id", id);
   }
   return id;

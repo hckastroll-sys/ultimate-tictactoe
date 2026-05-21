@@ -132,7 +132,7 @@ export default function OnlineGame({ gameId, onBack }) {
     pushState(fresh, freshScores, null);
   }
 
-  const shareUrl = `${window.location.origin}${window.location.pathname}?g=${gameId}`;
+  const shareUrl = `${import.meta.env.VITE_PUBLIC_URL || window.location.origin}${window.location.pathname}?g=${gameId}`;
 
   function copyLink() {
     navigator.clipboard.writeText(shareUrl).then(() => {
@@ -176,14 +176,14 @@ function Splash({ message, onBack }) {
     <div style={{
       minHeight: "100vh", background: "#182e08", display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", gap: 16,
-      fontFamily: "'Special Elite', cursive", color: "rgba(240,235,220,0.78)",
+      fontFamily: "system-ui, sans-serif", color: "rgba(240,235,220,0.9)",
     }}>
-      <div style={{ fontSize: "1.1rem" }}>{message}</div>
+      <div style={{ fontSize: "1.2rem", letterSpacing: "0.04em" }}>{message}</div>
       {onBack && (
         <button onClick={onBack} style={{
-          fontFamily: "'Special Elite', cursive", fontSize: "0.88rem",
-          color: "rgba(240,235,220,0.78)", background: "transparent",
-          border: "1.5px solid rgba(240,235,220,0.4)", padding: "7px 22px",
+          fontFamily: "system-ui, sans-serif", fontSize: "0.9rem",
+          color: "rgba(240,235,220,0.9)", background: "transparent",
+          border: "1.5px solid rgba(240,235,220,0.5)", padding: "8px 24px",
           cursor: "pointer", borderRadius: "3px",
         }}>Back to Menu</button>
       )}
