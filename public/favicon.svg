@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Blackboard background -->
+  <rect width="32" height="32" rx="6" fill="#182e08"/>
+  <!-- Subtle gradient overlay -->
+  <radialGradient id="g" cx="30%" cy="25%" r="70%">
+    <stop offset="0%" stop-color="#2d550c" stop-opacity="0.5"/>
+    <stop offset="100%" stop-color="#0a1f04" stop-opacity="0.3"/>
+  </radialGradient>
+  <rect width="32" height="32" rx="6" fill="url(#g)"/>
+  <!-- Grid lines (chalk white) -->
+  <!-- Vertical lines -->
+  <line x1="11" y1="4" x2="11" y2="28" stroke="rgba(240,235,220,0.75)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="21" y1="4" x2="21" y2="28" stroke="rgba(240,235,220,0.75)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Horizontal lines -->
+  <line x1="4" y1="11" x2="28" y2="11" stroke="rgba(240,235,220,0.75)" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="4" y1="21" x2="28" y2="21" stroke="rgba(240,235,220,0.75)" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- X in top-left (yellow) -->
+  <line x1="5.5" y1="5.5" x2="9.5" y2="9.5" stroke="#f5c842" stroke-width="2" stroke-linecap="round"/>
+  <line x1="9.5" y1="5.5" x2="5.5" y2="9.5" stroke="#f5c842" stroke-width="2" stroke-linecap="round"/>
+  <!-- O in center (blue) -->
+  <circle cx="16" cy="16" r="2.8" fill="none" stroke="#5bc8e8" stroke-width="1.8"/>
+  <!-- X in bottom-right (yellow) -->
+  <line x1="22.5" y1="22.5" x2="26.5" y2="26.5" stroke="#f5c842" stroke-width="2" stroke-linecap="round"/>
+  <line x1="26.5" y1="22.5" x2="22.5" y2="26.5" stroke="#f5c842" stroke-width="2" stroke-linecap="round"/>
+</svg>
