@@ -14,6 +14,10 @@ export default function OnlineGame({ gameId, onBack }) {
   const [copied, setCopied] = useState(false);
   const playerId = getPlayerId();
   const prevGameOver = useRef(false);
+  const myRoleRef = useRef(null);
+
+  // Keep ref in sync so the realtime callback always reads the latest role
+  useEffect(() => { myRoleRef.current = myRole; }, [myRole]);
 
   function handleThemeChange(key) {
     setThemeKey(key);
@@ -38,6 +42,15 @@ export default function OnlineGame({ gameId, onBack }) {
         setLastMove(row.state.lastMove || null);
         const both = !!(row.x_player_id && row.o_player_id);
         setStatus(both ? "playing" : "waiting");
+        if (
+          myRoleRef.current &&
+          row.state.game.currentPlayer === myRoleRef.current &&
+          !row.state.game.gameOver &&
+          document.hidden &&
+          Notification.permission === "granted"
+        ) {
+          new Notification("Ultimate Tic-Tac-Toe", { body: "It's your turn!", icon: "/pwa-192x192.png" });
+        }
       })
       .subscribe();
 
@@ -68,6 +81,9 @@ export default function OnlineGame({ gameId, onBack }) {
       }
 
       setMyRole(role);
+      if (role && "Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
       setGame(data.state.game);
       setSessionScores(data.state.sessionScores || { X: 0, O: 0, draw: 0 });
       setLastMove(data.state.lastMove || null);
