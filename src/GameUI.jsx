@@ -289,14 +289,14 @@ export default function GameUI({
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
   rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
   names = { X: "X", O: "O" }, onNameChange = () => {}, canEditNames = { X: true, O: true },
-  timeLeft = null,
+  timeLeft = null, sessionWinner = null,
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
 
-  const { cells, currentPlayer, activeBoard, gameOver } = game;
+  const { cells, currentPlayer, activeBoard, gameOver, megaOwners } = game;
   const isOver = gameOver;
-  const scores = calcScores(cells, rules);
+  const scores = calcScores(cells, rules, megaOwners);
   const megaLine = scores.megaLine;
   const megaWinnerLive = scores.megaWinner;
 
@@ -305,7 +305,10 @@ export default function GameUI({
     : null;
 
   let statusText, statusColor;
-  if (isWaiting) {
+  if (sessionWinner) {
+    statusText = `${names[sessionWinner]} wins the session!`;
+    statusColor = sessionWinner === "X" ? t.xColor : t.oColor;
+  } else if (isWaiting) {
     statusText = "Waiting for opponent…";
     statusColor = t.chalkDim;
   } else if (isOver) {
@@ -462,8 +465,10 @@ export default function GameUI({
           <RulesPanel rules={rules} onRulesChange={onRulesChange} canEdit={canEditRules} t={t} s={s} />
 
           <div style={s.buttons}>
-            <button onClick={onNewGame} style={s.btn}>New Game</button>
-            <button onClick={onResetAll} style={{ ...s.btn, opacity: 0.3, borderColor: t.chalkDim }}>Reset All</button>
+            {!sessionWinner && <button onClick={onNewGame} style={s.btn}>New Game</button>}
+            <button onClick={onResetAll} style={{ ...s.btn, opacity: sessionWinner ? 0.85 : 0.3, borderColor: sessionWinner ? t.chalk : t.chalkDim }}>
+              {sessionWinner ? "New Session" : "Reset All"}
+            </button>
             {onBack && (
               <button onClick={onBack} style={{ ...s.btn, opacity: 0.3, borderColor: t.chalkDim }}>Menu</button>
             )}

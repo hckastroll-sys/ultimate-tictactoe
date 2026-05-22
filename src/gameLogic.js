@@ -42,7 +42,8 @@ export function getMegaWinLine(cells) {
   return null;
 }
 
-export function calcScores(cells, rules) {
+// megaOwners: per-board override array (steal rule); null entry = use miniOwner
+export function calcScores(cells, rules, megaOwners) {
   let x = 0, o = 0;
   for (const board of cells) {
     const c = countLines(board);
@@ -50,7 +51,7 @@ export function calcScores(cells, rules) {
     o += c.o;
   }
 
-  const owners = cells.map(b => miniOwner(b));
+  const owners = cells.map((b, i) => (megaOwners?.[i]) || miniOwner(b));
   const xMegaLines = [], oMegaLines = [];
   for (const line of LINES) {
     const [a, b, c] = line;
@@ -81,15 +82,17 @@ export function calcScores(cells, rules) {
   };
 }
 
-export const emptyGame = () => ({
+// starter: "X" or "O" — who moves first (swapSides rule)
+export const emptyGame = (starter = "X") => ({
   cells: Array(9).fill(null).map(() => Array(9).fill(null)),
-  currentPlayer: "X",
+  currentPlayer: starter,
   activeBoard: null,
   gameOver: false,
+  megaOwners: Array(9).fill(null),
 });
 
 export function applyMove(game, mb, c, rules) {
-  const { cells, currentPlayer } = game;
+  const { cells, currentPlayer, megaOwners = Array(9).fill(null) } = game;
   if (game.gameOver) return null;
   if (cells[mb][c]) return null;
   if (game.activeBoard !== null && game.activeBoard !== mb) return null;
@@ -97,6 +100,21 @@ export function applyMove(game, mb, c, rules) {
   const newCells = cells.map((b, i) =>
     i === mb ? b.map((v, j) => j === c ? currentPlayer : v) : b
   );
+
+  // Steal rule: if currentPlayer completes a new line in a board the opponent owned,
+  // override that board's mega ownership to currentPlayer
+  const newMegaOwners = [...megaOwners];
+  if (rules?.steal) {
+    const prevLines = completedLines(cells[mb]);
+    const newLines = completedLines(newCells[mb]);
+    const gotNewLine = newLines.some((p, i) => p === currentPlayer && !prevLines[i]);
+    if (gotNewLine) {
+      const prevOwner = megaOwners[mb] || miniOwner(cells[mb]);
+      if (prevOwner && prevOwner !== currentPlayer) {
+        newMegaOwners[mb] = currentPlayer;
+      }
+    }
+  }
 
   const nextPlayer = currentPlayer === "X" ? "O" : "X";
   const targetFull = isFull(newCells[c]);
@@ -108,6 +126,7 @@ export function applyMove(game, mb, c, rules) {
       currentPlayer: nextPlayer,
       activeBoard: targetFull ? null : c,
       gameOver: gameEnds,
+      megaOwners: newMegaOwners,
     },
     gameEnded: gameEnds,
   };

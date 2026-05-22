@@ -13,9 +13,11 @@ export default function OnlineGame({ gameId, onBack }) {
   const [myRole, setMyRole] = useState(null);
   const [rules, setRules] = useState(DEFAULT_RULES);
   const [names, setNames] = useState({ X: "X", O: "O" });
+  const [sessionWinner, setSessionWinner] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const timerRef = useRef(null);
   const onTimeoutRef = useRef(null);
+  const swapFlagRef = useRef(false);
   const [status, setStatus] = useState("connecting"); // connecting | waiting | playing | expired | error
   const [copied, setCopied] = useState(false);
   const playerId = getPlayerId();
@@ -116,7 +118,7 @@ export default function OnlineGame({ gameId, onBack }) {
 
   useEffect(() => {
     clearInterval(timerRef.current);
-    if (!rules.timeLimit || game.gameOver) { setTimeLeft(null); return; }
+    if (!rules.timeLimit || game.gameOver || !lastMove) { setTimeLeft(null); return; }
     const capturedPlayer = game.currentPlayer;
     let t = rules.timeLimit;
     setTimeLeft(t);
@@ -129,7 +131,7 @@ export default function OnlineGame({ gameId, onBack }) {
       }
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [game.currentPlayer, game.gameOver, rules.timeLimit]);
+  }, [game.currentPlayer, game.gameOver, rules.timeLimit, !!lastMove]);
 
   async function pushState(newGame, newSessionScores, newLastMove, newRules, newNames) {
     await getSupabase().from("games").update({
@@ -145,10 +147,13 @@ export default function OnlineGame({ gameId, onBack }) {
 
     let newSessionScores = sessionScores;
     if (result.gameEnded) {
-      const s = calcScores(result.newGame.cells, rules);
+      const s = calcScores(result.newGame.cells, rules, result.newGame.megaOwners);
       const w = s.xTotal > s.oTotal ? "X" : s.oTotal > s.xTotal ? "O" : "draw";
       newSessionScores = { ...sessionScores, [w]: sessionScores[w] + 1 };
       setSessionScores(newSessionScores);
+      if (rules.firstToN && w !== "draw" && newSessionScores[w] >= rules.firstToN) {
+        setSessionWinner(w);
+      }
     }
 
     const newLastMove = { mb, c };
@@ -158,17 +163,25 @@ export default function OnlineGame({ gameId, onBack }) {
   }
 
   function newGame() {
-    const fresh = emptyGame();
+    let starter = "X";
+    if (rules.swapSides) {
+      swapFlagRef.current = !swapFlagRef.current;
+      starter = swapFlagRef.current ? "O" : "X";
+    }
+    const fresh = emptyGame(starter);
     setGame(fresh);
     setLastMove(null);
+    setSessionWinner(null);
     pushState(fresh, sessionScores, null, rules, names);
   }
 
   function resetAll() {
+    swapFlagRef.current = false;
     const fresh = emptyGame();
     const freshScores = { X: 0, O: 0, draw: 0 };
     setGame(fresh);
     setSessionScores(freshScores);
+    setSessionWinner(null);
     setLastMove(null);
     pushState(fresh, freshScores, null, rules, names);
   }
@@ -214,6 +227,7 @@ export default function OnlineGame({ gameId, onBack }) {
       onResetAll={resetAll}
       themeKey={themeKey}
       onThemeChange={handleThemeChange}
+      sessionWinner={sessionWinner}
       myRole={myRole}
       isWaiting={status === "waiting"}
       shareUrl={shareUrl}
