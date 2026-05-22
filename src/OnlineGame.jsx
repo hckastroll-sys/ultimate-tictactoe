@@ -216,6 +216,8 @@ export default function OnlineGame({ gameId, onBack }) {
     return <Splash message="Game not found." onBack={onBack} />;
   }
 
+  const gameInProgress = lastMove !== null && !game.gameOver;
+
   return (
     <GameUI
       game={game}
@@ -235,6 +237,7 @@ export default function OnlineGame({ gameId, onBack }) {
       rules={rules}
       onRulesChange={handleRulesChange}
       canEditRules={myRole === "X"}
+      gameInProgress={gameInProgress}
       names={names}
       onNameChange={handleNameChange}
       canEditNames={{ X: myRole === "X", O: myRole === "O" }}

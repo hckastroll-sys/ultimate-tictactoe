@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { THEMES, THEME_ORDER } from "./themes";
 import { miniOwner, countLines, completedLines, calcScores, MEGA_BONUS } from "./gameLogic";
 import { RULE_DEFS, DEFAULT_RULES, UNLOCK_ALL } from "./rules";
@@ -249,17 +249,32 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
   );
 }
 
-function RulesPanel({ rules, onRulesChange, canEdit, t, s }) {
+function RulesPanel({ rules, onRulesChange, canEdit, gameInProgress, t, s }) {
   const [open, setOpen] = useState(false);
+  const [flash, setFlash] = useState(false);
+  const prevLocked = useRef(gameInProgress);
   const free = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
   const locked = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
 
+  useEffect(() => {
+    if (prevLocked.current && !gameInProgress) {
+      setFlash(true);
+      const id = setTimeout(() => setFlash(false), 1400);
+      return () => clearTimeout(id);
+    }
+    prevLocked.current = gameInProgress;
+  }, [gameInProgress]);
+
+  const effectiveCanEdit = canEdit && !gameInProgress;
+
   return (
-    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+      borderRadius: 6, animation: flash ? "rulesUnlock 1.4s ease-out" : "none",
+    }}>
       <button onClick={() => setOpen(o => !o)} style={{
         ...s.btn, fontSize: "0.72rem", padding: "4px 16px", opacity: 0.45,
       }}>
-        Rules {open ? "▲" : "▼"}
+        Rules{gameInProgress ? <span style={{ color: t.chalkDim, fontSize: "0.85em", marginLeft: 5, opacity: 0.7 }}>(locked)</span> : null} {open ? "▲" : "▼"}
       </button>
 
       {open && (
@@ -268,17 +283,22 @@ function RulesPanel({ rules, onRulesChange, canEdit, t, s }) {
           border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 6,
           padding: "10px 14px", display: "flex", flexDirection: "column", gap: 9,
         }}>
+          {gameInProgress && (
+            <div style={{ color: t.chalkDim, fontSize: "0.62rem", textAlign: "center", opacity: 0.7, paddingBottom: 4, borderBottom: `1px solid rgba(255,255,255,0.08)` }}>
+              Rules are locked while a game is in progress.
+            </div>
+          )}
           {free.map(def => (
             <RuleRow key={def.key} def={def} value={rules[def.key]}
               onChange={v => onRulesChange({ ...rules, [def.key]: v })}
-              canEdit={canEdit} locked={false} t={t} />
+              canEdit={effectiveCanEdit} locked={false} t={t} />
           ))}
           <div style={{ borderTop: `1px solid ${t.chalkDim}`, opacity: 0.25, margin: "2px 0" }} />
           {locked.map(def => (
             <RuleRow key={def.key} def={def} value={rules[def.key]}
               onChange={() => {}} canEdit={false} locked={true} t={t} />
           ))}
-          {!canEdit && (
+          {!canEdit && !gameInProgress && (
             <div style={{ color: t.chalkDim, fontSize: "0.62rem", textAlign: "center", marginTop: 2, opacity: 0.6 }}>
               Only the host (X) can change rules
             </div>
@@ -296,7 +316,7 @@ export default function GameUI({
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
   rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
   names = { X: "X", O: "O" }, onNameChange = () => {}, canEditNames = { X: true, O: true },
-  timeLeft = null, sessionWinner = null,
+  timeLeft = null, sessionWinner = null, gameInProgress = false,
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
@@ -469,7 +489,7 @@ export default function GameUI({
             })}
           </div>
 
-          <RulesPanel rules={rules} onRulesChange={onRulesChange} canEdit={canEditRules} t={t} s={s} />
+          <RulesPanel rules={rules} onRulesChange={onRulesChange} canEdit={canEditRules} gameInProgress={gameInProgress} t={t} s={s} />
 
           <div style={s.buttons}>
             {!sessionWinner && <button onClick={onNewGame} style={s.btn}>New Game</button>}
@@ -489,6 +509,10 @@ export default function GameUI({
         @keyframes popIn {
           from { transform: scale(0.25) rotate(-12deg); opacity: 0; }
           to   { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes rulesUnlock {
+          0%   { box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 14px rgba(255,255,255,0.25); }
+          100% { box-shadow: none; }
         }
       `}</style>
     </div>

@@ -82,6 +82,8 @@ export default function LocalGame({ onBack }) {
     setAnimKey(k => k + 1);
   }
 
+  const gameInProgress = lastMove !== null && !game.gameOver;
+
   return (
     <GameUI
       game={game}
@@ -97,6 +99,7 @@ export default function LocalGame({ onBack }) {
       rules={rules}
       onRulesChange={setRules}
       canEditRules={true}
+      gameInProgress={gameInProgress}
       names={names}
       onNameChange={(player, name) => setNames(prev => ({ ...prev, [player]: name }))}
       canEditNames={{ X: true, O: true }}
