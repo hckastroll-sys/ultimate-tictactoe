@@ -1,6 +1,7 @@
 import { useState } from "react";
 import GameUI from "./GameUI";
 import { emptyGame, applyMove, calcScores } from "./gameLogic";
+import { DEFAULT_RULES } from "./rules";
 
 export default function LocalGame({ onBack }) {
   const [game, setGame] = useState(emptyGame());
@@ -8,6 +9,7 @@ export default function LocalGame({ onBack }) {
   const [lastMove, setLastMove] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
+  const [rules, setRules] = useState(DEFAULT_RULES);
 
   function handleThemeChange(key) {
     setThemeKey(key);
@@ -15,10 +17,10 @@ export default function LocalGame({ onBack }) {
   }
 
   function makeMove(mb, c) {
-    const result = applyMove(game, mb, c);
+    const result = applyMove(game, mb, c, rules);
     if (!result) return;
     if (result.gameEnded) {
-      const s = calcScores(result.newGame.cells);
+      const s = calcScores(result.newGame.cells, rules);
       const w = s.xTotal > s.oTotal ? "X" : s.oTotal > s.xTotal ? "O" : "draw";
       setSessionScores(prev => ({ ...prev, [w]: prev[w] + 1 }));
     }
@@ -50,6 +52,9 @@ export default function LocalGame({ onBack }) {
       onResetAll={resetAll}
       themeKey={themeKey}
       onThemeChange={handleThemeChange}
+      rules={rules}
+      onRulesChange={setRules}
+      canEditRules={true}
       onBack={onBack}
     />
   );

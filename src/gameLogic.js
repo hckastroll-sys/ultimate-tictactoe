@@ -42,18 +42,43 @@ export function getMegaWinLine(cells) {
   return null;
 }
 
-export function calcScores(cells) {
+export function calcScores(cells, rules) {
   let x = 0, o = 0;
   for (const board of cells) {
     const c = countLines(board);
     x += c.x;
     o += c.o;
   }
-  const megaLine = getMegaWinLine(cells);
-  const megaWinner = megaLine ? miniOwner(cells[megaLine[0]]) : null;
-  const xTotal = x + (megaWinner === "X" ? MEGA_BONUS : 0);
-  const oTotal = o + (megaWinner === "O" ? MEGA_BONUS : 0);
-  return { x, o, xTotal, oTotal, megaWinner, megaLine };
+
+  const owners = cells.map(b => miniOwner(b));
+  const xMegaLines = [], oMegaLines = [];
+  for (const line of LINES) {
+    const [a, b, c] = line;
+    if (owners[a] && owners[a] === owners[b] && owners[a] === owners[c]) {
+      (owners[a] === "X" ? xMegaLines : oMegaLines).push(line);
+    }
+  }
+
+  const megaLine = xMegaLines[0] || oMegaLines[0] || null;
+  const megaWinner = megaLine ? owners[megaLine[0]] : null;
+
+  let xBonus = 0, oBonus = 0;
+  if ((rules?.megaBonus ?? "first") === "all_unique") {
+    if (xMegaLines.length > 0) xBonus = MEGA_BONUS;
+    if (oMegaLines.length > 0) oBonus = MEGA_BONUS;
+  } else {
+    if (megaWinner === "X") xBonus = MEGA_BONUS;
+    else if (megaWinner === "O") oBonus = MEGA_BONUS;
+  }
+
+  return {
+    x, o,
+    xTotal: x + xBonus,
+    oTotal: o + oBonus,
+    megaWinner, megaLine,
+    xMegaLines, oMegaLines,
+    xBonus, oBonus,
+  };
 }
 
 export const emptyGame = () => ({
@@ -63,7 +88,7 @@ export const emptyGame = () => ({
   gameOver: false,
 });
 
-export function applyMove(game, mb, c) {
+export function applyMove(game, mb, c, rules) {
   const { cells, currentPlayer } = game;
   if (game.gameOver) return null;
   if (cells[mb][c]) return null;
@@ -75,14 +100,15 @@ export function applyMove(game, mb, c) {
 
   const nextPlayer = currentPlayer === "X" ? "O" : "X";
   const targetFull = isFull(newCells[c]);
+  const gameEnds = targetFull && (rules?.completedBoard ?? "end") === "end";
 
   return {
     newGame: {
       cells: newCells,
       currentPlayer: nextPlayer,
       activeBoard: targetFull ? null : c,
-      gameOver: targetFull,
+      gameOver: gameEnds,
     },
-    gameEnded: targetFull,
+    gameEnded: gameEnds,
   };
 }

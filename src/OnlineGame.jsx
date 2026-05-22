@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import GameUI from "./GameUI";
 import { emptyGame, applyMove, calcScores } from "./gameLogic";
 import { getSupabase, getPlayerId, isExpired } from "./supabase";
+import { DEFAULT_RULES } from "./rules";
 
 export default function OnlineGame({ gameId, onBack }) {
   const [game, setGame] = useState(emptyGame());
@@ -10,6 +11,7 @@ export default function OnlineGame({ gameId, onBack }) {
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
   const [myRole, setMyRole] = useState(null);
+  const [rules, setRules] = useState(DEFAULT_RULES);
   const [status, setStatus] = useState("connecting"); // connecting | waiting | playing | expired | error
   const [copied, setCopied] = useState(false);
   const playerId = getPlayerId();
@@ -35,6 +37,7 @@ export default function OnlineGame({ gameId, onBack }) {
         setGame(row.state.game);
         setSessionScores(row.state.sessionScores || { X: 0, O: 0, draw: 0 });
         setLastMove(row.state.lastMove || null);
+        setRules(row.state.rules || DEFAULT_RULES);
         const both = !!(row.x_player_id && row.o_player_id);
         setStatus(both ? "playing" : "waiting");
       })
@@ -70,6 +73,7 @@ export default function OnlineGame({ gameId, onBack }) {
       setGame(data.state.game);
       setSessionScores(data.state.sessionScores || { X: 0, O: 0, draw: 0 });
       setLastMove(data.state.lastMove || null);
+      setRules(data.state.rules || DEFAULT_RULES);
       const bothPresent = !!(data.x_player_id && (data.o_player_id || role === "O"));
       setStatus(bothPresent ? "playing" : "waiting");
     }
@@ -89,21 +93,21 @@ export default function OnlineGame({ gameId, onBack }) {
     prevGameOver.current = game.gameOver;
   }, [game.gameOver]);
 
-  async function pushState(newGame, newSessionScores, newLastMove) {
+  async function pushState(newGame, newSessionScores, newLastMove, newRules) {
     await getSupabase().from("games").update({
-      state: { game: newGame, sessionScores: newSessionScores, lastMove: newLastMove },
+      state: { game: newGame, sessionScores: newSessionScores, lastMove: newLastMove, rules: newRules },
     }).eq("id", gameId);
   }
 
   function makeMove(mb, c) {
     if (status !== "playing") return;
     if (myRole && game.currentPlayer !== myRole) return;
-    const result = applyMove(game, mb, c);
+    const result = applyMove(game, mb, c, rules);
     if (!result) return;
 
     let newSessionScores = sessionScores;
     if (result.gameEnded) {
-      const s = calcScores(result.newGame.cells);
+      const s = calcScores(result.newGame.cells, rules);
       const w = s.xTotal > s.oTotal ? "X" : s.oTotal > s.xTotal ? "O" : "draw";
       newSessionScores = { ...sessionScores, [w]: sessionScores[w] + 1 };
       setSessionScores(newSessionScores);
@@ -112,14 +116,14 @@ export default function OnlineGame({ gameId, onBack }) {
     const newLastMove = { mb, c };
     setGame(result.newGame);
     setLastMove(newLastMove);
-    pushState(result.newGame, newSessionScores, newLastMove);
+    pushState(result.newGame, newSessionScores, newLastMove, rules);
   }
 
   function newGame() {
     const fresh = emptyGame();
     setGame(fresh);
     setLastMove(null);
-    pushState(fresh, sessionScores, null);
+    pushState(fresh, sessionScores, null, rules);
   }
 
   function resetAll() {
@@ -128,7 +132,12 @@ export default function OnlineGame({ gameId, onBack }) {
     setGame(fresh);
     setSessionScores(freshScores);
     setLastMove(null);
-    pushState(fresh, freshScores, null);
+    pushState(fresh, freshScores, null, rules);
+  }
+
+  function handleRulesChange(newRules) {
+    setRules(newRules);
+    pushState(game, sessionScores, lastMove, newRules);
   }
 
   const shareUrl = `${import.meta.env.VITE_PUBLIC_URL || window.location.origin}${window.location.pathname}?g=${gameId}`;
@@ -165,6 +174,9 @@ export default function OnlineGame({ gameId, onBack }) {
       isWaiting={status === "waiting"}
       shareUrl={shareUrl}
       onCopyLink={copyLink}
+      rules={rules}
+      onRulesChange={handleRulesChange}
+      canEditRules={myRole === "X"}
       onBack={onBack}
     />
   );

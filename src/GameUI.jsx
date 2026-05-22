@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { THEMES, THEME_ORDER } from "./themes";
-import { getMegaWinLine, miniOwner, countLines, completedLines, calcScores, MEGA_BONUS } from "./gameLogic";
+import { miniOwner, countLines, completedLines, calcScores, MEGA_BONUS } from "./gameLogic";
+import { RULE_DEFS, DEFAULT_RULES } from "./rules";
 
 // SVG strike-through coords for each of the 8 lines (as % of viewBox 0 0 100 100)
 const LINE_COORDS = [
@@ -174,23 +176,91 @@ function isFull(board) {
   return board.every(c => c !== null);
 }
 
-// props: game, sessionScores, lastMove, animKey, onMove, onNewGame, onResetAll,
-//        themeKey, onThemeChange,
-//        myRole (null=local, 'X'/'O'=online), isWaiting, shareUrl, onCopyLink, onBack
+function RuleRow({ def, value, onChange, canEdit, locked, t }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      gap: 8, opacity: locked ? 0.32 : 1,
+    }}>
+      <span style={{ color: t.chalk, fontSize: "0.7rem", letterSpacing: "0.03em", flex: 1 }}>
+        {def.label}
+        {locked && <span style={{ color: t.chalkDim, fontSize: "0.65em", marginLeft: 4 }}>(coming soon)</span>}
+      </span>
+      <div style={{ display: "flex", gap: 3 }}>
+        {def.options.map(opt => {
+          const active = value === opt.value;
+          return (
+            <button key={String(opt.value)} onClick={() => !locked && canEdit && onChange(opt.value)} style={{
+              fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
+              color: active ? t.chalk : t.chalkDim,
+              background: active ? "rgba(255,255,255,0.1)" : "transparent",
+              border: `1px solid ${active ? t.chalk : t.chalkDim}`,
+              padding: "2px 7px", borderRadius: "10px",
+              cursor: !locked && canEdit ? "pointer" : "default",
+              opacity: active ? 1 : 0.55, transition: "all 0.15s",
+            }}>{opt.label}</button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RulesPanel({ rules, onRulesChange, canEdit, t, s }) {
+  const [open, setOpen] = useState(false);
+  const free = RULE_DEFS.filter(d => !d.locked);
+  const locked = RULE_DEFS.filter(d => d.locked);
+
+  return (
+    <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+      <button onClick={() => setOpen(o => !o)} style={{
+        ...s.btn, fontSize: "0.72rem", padding: "4px 16px", opacity: 0.45,
+      }}>
+        Rules {open ? "▲" : "▼"}
+      </button>
+
+      {open && (
+        <div style={{
+          width: "100%", background: "rgba(255,255,255,0.04)",
+          border: `1px solid rgba(255,255,255,0.1)`, borderRadius: 6,
+          padding: "10px 14px", display: "flex", flexDirection: "column", gap: 9,
+        }}>
+          {free.map(def => (
+            <RuleRow key={def.key} def={def} value={rules[def.key]}
+              onChange={v => onRulesChange({ ...rules, [def.key]: v })}
+              canEdit={canEdit} locked={false} t={t} />
+          ))}
+          <div style={{ borderTop: `1px solid ${t.chalkDim}`, opacity: 0.25, margin: "2px 0" }} />
+          {locked.map(def => (
+            <RuleRow key={def.key} def={def} value={rules[def.key]}
+              onChange={() => {}} canEdit={false} locked={true} t={t} />
+          ))}
+          {!canEdit && (
+            <div style={{ color: t.chalkDim, fontSize: "0.62rem", textAlign: "center", marginTop: 2, opacity: 0.6 }}>
+              Only the host (X) can change rules
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function GameUI({
   game, sessionScores, lastMove, animKey,
   onMove, onNewGame, onResetAll,
   themeKey, onThemeChange,
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
+  rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
 
   const { cells, currentPlayer, activeBoard, gameOver } = game;
   const isOver = gameOver;
-  const scores = calcScores(cells);
-  const megaLine = getMegaWinLine(cells);
-  const megaWinnerLive = megaLine ? miniOwner(cells[megaLine[0]]) : null;
+  const scores = calcScores(cells, rules);
+  const megaLine = scores.megaLine;
+  const megaWinnerLive = scores.megaWinner;
 
   const gameWinner = isOver
     ? scores.xTotal > scores.oTotal ? "X" : scores.oTotal > scores.xTotal ? "O" : "draw"
@@ -238,12 +308,12 @@ export default function GameUI({
             <div style={s.finalBreakdown}>
               <span style={{ color: t.xColor }}>
                 X: {scores.x} line{scores.x !== 1 ? "s" : ""}
-                {scores.megaWinner === "X" ? ` +${MEGA_BONUS} mega` : ""} = <b>{scores.xTotal}pts</b>
+                {scores.xBonus > 0 ? ` +${scores.xBonus} mega` : ""} = <b>{scores.xTotal}pts</b>
               </span>
               <span style={{ color: t.chalkDim }}>vs</span>
               <span style={{ color: t.oColor }}>
                 O: {scores.o} line{scores.o !== 1 ? "s" : ""}
-                {scores.megaWinner === "O" ? ` +${MEGA_BONUS} mega` : ""} = <b>{scores.oTotal}pts</b>
+                {scores.oBonus > 0 ? ` +${scores.oBonus} mega` : ""} = <b>{scores.oTotal}pts</b>
               </span>
             </div>
           )}
@@ -329,6 +399,8 @@ export default function GameUI({
               );
             })}
           </div>
+
+          <RulesPanel rules={rules} onRulesChange={onRulesChange} canEdit={canEditRules} t={t} s={s} />
 
           <div style={s.buttons}>
             <button onClick={onNewGame} style={s.btn}>New Game</button>
