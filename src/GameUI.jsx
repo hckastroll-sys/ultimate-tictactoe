@@ -215,13 +215,20 @@ function NameInput({ player, names, onNameChange, canEdit, color, fontFamily }) 
 function RuleRow({ def, value, onChange, canEdit, locked, t }) {
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
+      display: "flex", alignItems: "flex-start", justifyContent: "space-between",
       gap: 8, opacity: locked ? 0.32 : 1,
     }}>
-      <span style={{ color: t.chalk, fontSize: "0.7rem", letterSpacing: "0.03em", flex: 1 }}>
-        {def.label}
-        {locked && <span style={{ color: t.chalkDim, fontSize: "0.65em", marginLeft: 4 }}>(coming soon)</span>}
-      </span>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+        <span style={{ color: t.chalk, fontSize: "0.7rem", letterSpacing: "0.03em" }}>
+          {def.label}
+          {locked && <span style={{ color: t.chalkDim, fontSize: "0.65em", marginLeft: 4 }}>(coming soon)</span>}
+        </span>
+        {def.description && (
+          <span style={{ color: t.chalkDim, fontSize: "0.6rem", lineHeight: 1.4, opacity: 0.75 }}>
+            {def.description}
+          </span>
+        )}
+      </div>
       <div style={{ display: "flex", gap: 3 }}>
         {def.options.map(opt => {
           const active = value === opt.value;
