@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { THEMES, THEME_ORDER } from "./themes";
 import { miniOwner, countLines, completedLines, calcScores, MEGA_BONUS } from "./gameLogic";
-import { RULE_DEFS, DEFAULT_RULES } from "./rules";
+import { RULE_DEFS, DEFAULT_RULES, UNLOCK_ALL } from "./rules";
 
 // SVG strike-through coords for each of the 8 lines (as % of viewBox 0 0 100 100)
 const LINE_COORDS = [
@@ -208,8 +208,8 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
 
 function RulesPanel({ rules, onRulesChange, canEdit, t, s }) {
   const [open, setOpen] = useState(false);
-  const free = RULE_DEFS.filter(d => !d.locked);
-  const locked = RULE_DEFS.filter(d => d.locked);
+  const free = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
+  const locked = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
 
   return (
     <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>

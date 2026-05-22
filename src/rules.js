@@ -1,3 +1,5 @@
+export const UNLOCK_ALL = true; // set to false to re-enable locks for production
+
 export const DEFAULT_RULES = {
   completedBoard: "end",   // "end" | "free_turn"
   megaBonus: "first",      // "first" | "all_unique"
