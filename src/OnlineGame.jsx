@@ -12,6 +12,7 @@ export default function OnlineGame({ gameId, onBack }) {
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
   const [myRole, setMyRole] = useState(null);
   const [rules, setRules] = useState(DEFAULT_RULES);
+  const [names, setNames] = useState({ X: "X", O: "O" });
   const [status, setStatus] = useState("connecting"); // connecting | waiting | playing | expired | error
   const [copied, setCopied] = useState(false);
   const playerId = getPlayerId();
@@ -38,6 +39,7 @@ export default function OnlineGame({ gameId, onBack }) {
         setSessionScores(row.state.sessionScores || { X: 0, O: 0, draw: 0 });
         setLastMove(row.state.lastMove || null);
         setRules(row.state.rules || DEFAULT_RULES);
+        setNames(row.state.names || { X: "X", O: "O" });
         const both = !!(row.x_player_id && row.o_player_id);
         setStatus(both ? "playing" : "waiting");
       })
@@ -74,6 +76,7 @@ export default function OnlineGame({ gameId, onBack }) {
       setSessionScores(data.state.sessionScores || { X: 0, O: 0, draw: 0 });
       setLastMove(data.state.lastMove || null);
       setRules(data.state.rules || DEFAULT_RULES);
+      setNames(data.state.names || { X: "X", O: "O" });
       const bothPresent = !!(data.x_player_id && (data.o_player_id || role === "O"));
       setStatus(bothPresent ? "playing" : "waiting");
     }
@@ -93,9 +96,9 @@ export default function OnlineGame({ gameId, onBack }) {
     prevGameOver.current = game.gameOver;
   }, [game.gameOver]);
 
-  async function pushState(newGame, newSessionScores, newLastMove, newRules) {
+  async function pushState(newGame, newSessionScores, newLastMove, newRules, newNames) {
     await getSupabase().from("games").update({
-      state: { game: newGame, sessionScores: newSessionScores, lastMove: newLastMove, rules: newRules },
+      state: { game: newGame, sessionScores: newSessionScores, lastMove: newLastMove, rules: newRules, names: newNames },
     }).eq("id", gameId);
   }
 
@@ -116,14 +119,14 @@ export default function OnlineGame({ gameId, onBack }) {
     const newLastMove = { mb, c };
     setGame(result.newGame);
     setLastMove(newLastMove);
-    pushState(result.newGame, newSessionScores, newLastMove, rules);
+    pushState(result.newGame, newSessionScores, newLastMove, rules, names);
   }
 
   function newGame() {
     const fresh = emptyGame();
     setGame(fresh);
     setLastMove(null);
-    pushState(fresh, sessionScores, null, rules);
+    pushState(fresh, sessionScores, null, rules, names);
   }
 
   function resetAll() {
@@ -132,12 +135,18 @@ export default function OnlineGame({ gameId, onBack }) {
     setGame(fresh);
     setSessionScores(freshScores);
     setLastMove(null);
-    pushState(fresh, freshScores, null, rules);
+    pushState(fresh, freshScores, null, rules, names);
   }
 
   function handleRulesChange(newRules) {
     setRules(newRules);
-    pushState(game, sessionScores, lastMove, newRules);
+    pushState(game, sessionScores, lastMove, newRules, names);
+  }
+
+  function handleNameChange(player, name) {
+    const newNames = { ...names, [player]: name };
+    setNames(newNames);
+    pushState(game, sessionScores, lastMove, rules, newNames);
   }
 
   const shareUrl = `${import.meta.env.VITE_PUBLIC_URL || window.location.origin}${window.location.pathname}?g=${gameId}`;
@@ -177,6 +186,9 @@ export default function OnlineGame({ gameId, onBack }) {
       rules={rules}
       onRulesChange={handleRulesChange}
       canEditRules={myRole === "X"}
+      names={names}
+      onNameChange={handleNameChange}
+      canEditNames={{ X: myRole === "X", O: myRole === "O" }}
       onBack={onBack}
     />
   );

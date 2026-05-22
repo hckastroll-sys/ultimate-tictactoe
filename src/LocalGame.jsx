@@ -10,6 +10,7 @@ export default function LocalGame({ onBack }) {
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
   const [rules, setRules] = useState(DEFAULT_RULES);
+  const [names, setNames] = useState({ X: "X", O: "O" });
 
   function handleThemeChange(key) {
     setThemeKey(key);
@@ -55,6 +56,9 @@ export default function LocalGame({ onBack }) {
       rules={rules}
       onRulesChange={setRules}
       canEditRules={true}
+      names={names}
+      onNameChange={(player, name) => setNames(prev => ({ ...prev, [player]: name }))}
+      canEditNames={{ X: true, O: true }}
       onBack={onBack}
     />
   );

@@ -176,6 +176,42 @@ function isFull(board) {
   return board.every(c => c !== null);
 }
 
+function NameInput({ player, names, onNameChange, canEdit, color, fontFamily }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(names[player]);
+
+  function save() {
+    const trimmed = draft.trim();
+    onNameChange(player, trimmed || player);
+    setEditing(false);
+  }
+
+  if (editing) {
+    return (
+      <input value={draft} autoFocus
+        onChange={e => setDraft(e.target.value.slice(0, 12))}
+        onBlur={save}
+        onKeyDown={e => e.key === "Enter" && save()}
+        style={{
+          fontFamily, color, background: "transparent", border: "none",
+          borderBottom: `1px solid ${color}`, fontSize: "inherit",
+          width: "80px", outline: "none", textAlign: "center", padding: 0,
+        }}
+      />
+    );
+  }
+
+  return (
+    <span onClick={() => canEdit && setEditing(true)} style={{
+      color, fontFamily,
+      cursor: canEdit ? "pointer" : "default",
+      borderBottom: canEdit ? `1px dashed ${color}55` : "none",
+    }}>
+      {names[player]}
+    </span>
+  );
+}
+
 function RuleRow({ def, value, onChange, canEdit, locked, t }) {
   return (
     <div style={{
@@ -252,6 +288,7 @@ export default function GameUI({
   themeKey, onThemeChange,
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
   rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
+  names = { X: "X", O: "O" }, onNameChange = () => {}, canEditNames = { X: true, O: true },
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
@@ -271,13 +308,13 @@ export default function GameUI({
     statusText = "Waiting for opponent…";
     statusColor = t.chalkDim;
   } else if (isOver) {
-    statusText = gameWinner === "draw" ? "Draw!" : `${gameWinner} Wins!`;
+    statusText = gameWinner === "draw" ? "Draw!" : `${names[gameWinner]} Wins!`;
     statusColor = gameWinner === "X" ? t.xColor : gameWinner === "O" ? t.oColor : t.chalkDim;
   } else if (myRole && currentPlayer !== myRole) {
-    statusText = "Opponent's Turn";
+    statusText = `${names[currentPlayer]}'s Turn`;
     statusColor = currentPlayer === "X" ? t.xColor : t.oColor;
   } else {
-    statusText = myRole ? "Your Turn" : `${currentPlayer}'s Turn`;
+    statusText = myRole ? "Your Turn" : `${names[currentPlayer]}'s Turn`;
     statusColor = currentPlayer === "X" ? t.xColor : t.oColor;
   }
 
@@ -296,7 +333,7 @@ export default function GameUI({
           <div style={{ color: t.chalkDim, fontSize: "0.75rem", letterSpacing: "0.06em", marginTop: -6 }}>
             You are&nbsp;
             <span style={{ color: myRole === "X" ? t.xColor : t.oColor, fontFamily: t.fontTitle }}>
-              {myRole}
+              {names[myRole]}
             </span>
           </div>
         )}
@@ -307,12 +344,12 @@ export default function GameUI({
           {isOver && (
             <div style={s.finalBreakdown}>
               <span style={{ color: t.xColor }}>
-                X: {scores.x} line{scores.x !== 1 ? "s" : ""}
+                {names.X}: {scores.x} line{scores.x !== 1 ? "s" : ""}
                 {scores.xBonus > 0 ? ` +${scores.xBonus} mega` : ""} = <b>{scores.xTotal}pts</b>
               </span>
               <span style={{ color: t.chalkDim }}>vs</span>
               <span style={{ color: t.oColor }}>
-                O: {scores.o} line{scores.o !== 1 ? "s" : ""}
+                {names.O}: {scores.o} line{scores.o !== 1 ? "s" : ""}
                 {scores.oBonus > 0 ? ` +${scores.oBonus} mega` : ""} = <b>{scores.oTotal}pts</b>
               </span>
             </div>
@@ -320,12 +357,12 @@ export default function GameUI({
         </div>
 
         <div style={s.liveCount}>
-          <span style={{ color: t.xColor }}>X: {scores.x}pts</span>
+          <span style={{ color: t.xColor }}>{names.X}: {scores.x}pts</span>
           <span style={{ color: t.chalkDim, fontSize: "0.82em" }}>lines scored</span>
-          <span style={{ color: t.oColor }}>O: {scores.o}pts</span>
+          <span style={{ color: t.oColor }}>{names.O}: {scores.o}pts</span>
           {megaWinnerLive && (
             <span style={{ color: megaWinnerLive === "X" ? t.xColor : t.oColor, fontSize: "0.78em", opacity: 0.8, marginLeft: 6 }}>
-              · {megaWinnerLive} has mega (+{MEGA_BONUS})
+              · {names[megaWinnerLive]} has mega (+{MEGA_BONUS})
             </span>
           )}
         </div>
@@ -369,7 +406,8 @@ export default function GameUI({
         <div style={s.bottom}>
           <div style={s.scores}>
             <div style={s.scoreItem}>
-              <span style={{ color: t.xColor, fontFamily: t.fontTitle }}>X</span>
+              <NameInput player="X" names={names} onNameChange={onNameChange}
+                canEdit={canEditNames.X} color={t.xColor} fontFamily={t.fontTitle} />
               <span style={s.scoreNum}>{sessionScores.X}</span>
             </div>
             <div style={{ ...s.scoreItem, opacity: 0.4, fontSize: "0.82em" }}>
@@ -377,7 +415,8 @@ export default function GameUI({
               <span style={s.scoreNum}>{sessionScores.draw}</span>
             </div>
             <div style={s.scoreItem}>
-              <span style={{ color: t.oColor, fontFamily: t.fontTitle }}>O</span>
+              <NameInput player="O" names={names} onNameChange={onNameChange}
+                canEdit={canEditNames.O} color={t.oColor} fontFamily={t.fontTitle} />
               <span style={s.scoreNum}>{sessionScores.O}</span>
             </div>
           </div>
