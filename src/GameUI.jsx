@@ -289,6 +289,7 @@ export default function GameUI({
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
   rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
   names = { X: "X", O: "O" }, onNameChange = () => {}, canEditNames = { X: true, O: true },
+  timeLeft = null,
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
@@ -341,6 +342,25 @@ export default function GameUI({
         <div style={s.statusArea}>
           <div style={{ ...s.status, color: statusColor }}>{statusText}</div>
           {hintText && <div style={s.hint}>{hintText}</div>}
+          {timeLeft !== null && !isOver && !isWaiting && (
+            <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 2 }}>
+              <span style={{
+                fontFamily: t.fontTitle,
+                fontSize: "clamp(1.1rem, 3.5vw, 1.4rem)",
+                color: timeLeft <= 5 ? "#ff5555" : timeLeft <= 10 ? "#ffaa44" : t.chalk,
+                transition: "color 0.4s",
+                letterSpacing: "0.05em",
+              }}>{timeLeft}s</span>
+              <div style={{ width: "min(80vw, 340px)", height: 3, background: "rgba(255,255,255,0.1)", borderRadius: 2 }}>
+                <div style={{
+                  height: "100%", borderRadius: 2,
+                  width: `${(timeLeft / rules.timeLimit) * 100}%`,
+                  background: timeLeft <= 5 ? "#ff5555" : timeLeft <= 10 ? "#ffaa44" : t.chalk,
+                  transition: "width 1s linear, background 0.4s",
+                }} />
+              </div>
+            </div>
+          )}
           {isOver && (
             <div style={s.finalBreakdown}>
               <span style={{ color: t.xColor }}>

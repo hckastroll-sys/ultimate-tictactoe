@@ -13,6 +13,9 @@ export default function OnlineGame({ gameId, onBack }) {
   const [myRole, setMyRole] = useState(null);
   const [rules, setRules] = useState(DEFAULT_RULES);
   const [names, setNames] = useState({ X: "X", O: "O" });
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
+  const onTimeoutRef = useRef(null);
   const [status, setStatus] = useState("connecting"); // connecting | waiting | playing | expired | error
   const [copied, setCopied] = useState(false);
   const playerId = getPlayerId();
@@ -95,6 +98,38 @@ export default function OnlineGame({ gameId, onBack }) {
     }
     prevGameOver.current = game.gameOver;
   }, [game.gameOver]);
+
+  // Keep timeout handler fresh on every render so it always sees latest state
+  useEffect(() => {
+    onTimeoutRef.current = (capturedPlayer) => {
+      if (game.gameOver || game.currentPlayer !== capturedPlayer) return;
+      if (myRole && game.currentPlayer !== myRole) return;
+      const newGame = {
+        ...game,
+        currentPlayer: game.currentPlayer === "X" ? "O" : "X",
+        activeBoard: null,
+      };
+      setGame(newGame);
+      pushState(newGame, sessionScores, lastMove, rules, names);
+    };
+  });
+
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    if (!rules.timeLimit || game.gameOver) { setTimeLeft(null); return; }
+    const capturedPlayer = game.currentPlayer;
+    let t = rules.timeLimit;
+    setTimeLeft(t);
+    timerRef.current = setInterval(() => {
+      t -= 1;
+      setTimeLeft(t);
+      if (t <= 0) {
+        clearInterval(timerRef.current);
+        onTimeoutRef.current?.(capturedPlayer);
+      }
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [game.currentPlayer, game.gameOver, rules.timeLimit]);
 
   async function pushState(newGame, newSessionScores, newLastMove, newRules, newNames) {
     await getSupabase().from("games").update({
@@ -189,6 +224,7 @@ export default function OnlineGame({ gameId, onBack }) {
       names={names}
       onNameChange={handleNameChange}
       canEditNames={{ X: myRole === "X", O: myRole === "O" }}
+      timeLeft={timeLeft}
       onBack={onBack}
     />
   );

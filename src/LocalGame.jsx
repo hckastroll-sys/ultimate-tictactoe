@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import GameUI from "./GameUI";
 import { emptyGame, applyMove, calcScores } from "./gameLogic";
 import { DEFAULT_RULES } from "./rules";
@@ -11,6 +11,28 @@ export default function LocalGame({ onBack }) {
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
   const [rules, setRules] = useState(DEFAULT_RULES);
   const [names, setNames] = useState({ X: "X", O: "O" });
+  const [timeLeft, setTimeLeft] = useState(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    if (!rules.timeLimit || game.gameOver) { setTimeLeft(null); return; }
+    const capturedPlayer = game.currentPlayer;
+    let t = rules.timeLimit;
+    setTimeLeft(t);
+    timerRef.current = setInterval(() => {
+      t -= 1;
+      setTimeLeft(t);
+      if (t <= 0) {
+        clearInterval(timerRef.current);
+        setGame(g => {
+          if (g.gameOver || g.currentPlayer !== capturedPlayer) return g;
+          return { ...g, currentPlayer: g.currentPlayer === "X" ? "O" : "X", activeBoard: null };
+        });
+      }
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [game.currentPlayer, game.gameOver, rules.timeLimit]);
 
   function handleThemeChange(key) {
     setThemeKey(key);
@@ -59,6 +81,7 @@ export default function LocalGame({ onBack }) {
       names={names}
       onNameChange={(player, name) => setNames(prev => ({ ...prev, [player]: name }))}
       canEditNames={{ X: true, O: true }}
+      timeLeft={timeLeft}
       onBack={onBack}
     />
   );
