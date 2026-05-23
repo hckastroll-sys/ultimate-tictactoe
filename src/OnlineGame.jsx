@@ -126,9 +126,7 @@ export default function OnlineGame({ gameId, onBack }) {
   const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   useEffect(() => {
     sessionTimerCbRef.current = () => {
-      const w = sessionScores.X > sessionScores.O ? "X"
-        : sessionScores.O > sessionScores.X ? "O"
-        : sessionTotalPts.X > sessionTotalPts.O ? "X"
+      const w = sessionTotalPts.X > sessionTotalPts.O ? "X"
         : sessionTotalPts.O > sessionTotalPts.X ? "O"
         : "draw";
       setSessionWinner(prev => prev || w);

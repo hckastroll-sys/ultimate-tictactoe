@@ -229,9 +229,10 @@ function NumberRuleInput({ value, onChange, canEdit, t }) {
     }
   }
 
+  const SYS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
   const btnBase = {
-    fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
-    padding: "2px 7px", borderRadius: "10px", transition: "all 0.15s",
+    fontFamily: SYS, fontSize: "0.72rem",
+    padding: "3px 9px", borderRadius: "10px", transition: "all 0.15s",
     cursor: canEdit ? "pointer" : "default",
   };
 
@@ -256,7 +257,7 @@ function NumberRuleInput({ value, onChange, canEdit, t }) {
         onKeyDown={e => e.key === "Enter" && commit(draft)}
         placeholder="pts"
         style={{
-          width: "46px", fontFamily: "inherit", fontSize: "0.64rem",
+          width: "52px", fontFamily: SYS, fontSize: "0.72rem",
           color: value != null ? t.chalk : t.chalkDim,
           background: value != null ? "rgba(255,255,255,0.1)" : "transparent",
           border: `1px solid ${value != null ? t.chalk : t.chalkDim}`,
@@ -270,18 +271,19 @@ function NumberRuleInput({ value, onChange, canEdit, t }) {
 }
 
 function RuleRow({ def, value, onChange, canEdit, locked, t }) {
+  const SYS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
   return (
     <div style={{
-      display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-      gap: 8, opacity: locked ? 0.32 : 1,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      gap: 12, opacity: locked ? 0.35 : 1,
     }}>
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-        <span style={{ color: t.chalk, fontSize: "0.7rem", letterSpacing: "0.03em" }}>
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
+        <span style={{ color: t.chalk, fontSize: "0.88rem", fontFamily: SYS, fontWeight: 600, lineHeight: 1.2 }}>
           {def.label}
-          {locked && <span style={{ color: t.chalkDim, fontSize: "0.65em", marginLeft: 4 }}>(coming soon)</span>}
+          {locked && <span style={{ color: t.chalkDim, fontSize: "0.7em", fontWeight: 400, marginLeft: 5 }}>(coming soon)</span>}
         </span>
         {def.description && (
-          <span style={{ color: t.chalkDim, fontSize: "0.6rem", lineHeight: 1.4, opacity: 0.75 }}>
+          <span style={{ color: t.chalkDim, fontSize: "0.72rem", fontFamily: SYS, lineHeight: 1.4 }}>
             {def.description}
           </span>
         )}
@@ -289,18 +291,19 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
       {def.type === "number" ? (
         <NumberRuleInput value={value} onChange={!locked && canEdit ? onChange : () => {}} canEdit={!locked && canEdit} t={t} />
       ) : (
-        <div style={{ display: "flex", gap: 3 }}>
+        <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
           {def.options.map(opt => {
             const active = value === opt.value;
             return (
               <button key={String(opt.value)} onClick={() => !locked && canEdit && onChange(opt.value)} style={{
-                fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
+                fontFamily: SYS, fontSize: "0.72rem", fontWeight: active ? 600 : 400,
                 color: active ? t.chalk : t.chalkDim,
-                background: active ? "rgba(255,255,255,0.1)" : "transparent",
+                background: active ? "rgba(255,255,255,0.12)" : "transparent",
                 border: `1px solid ${active ? t.chalk : t.chalkDim}`,
-                padding: "2px 7px", borderRadius: "10px",
+                padding: "3px 9px", borderRadius: "10px",
                 cursor: !locked && canEdit ? "pointer" : "default",
-                opacity: active ? 1 : 0.55, transition: "all 0.15s",
+                opacity: active ? 1 : 0.6, transition: "all 0.15s",
+                whiteSpace: "nowrap",
               }}>{opt.label}</button>
             );
           })}
@@ -370,56 +373,81 @@ function RulesPanel({ rules, onRulesChange, canEdit, gameInProgress, t, s }) {
   );
 }
 
+const MODAL_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+
 function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }) {
   const free = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
   const locked = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 200,
-      background: "rgba(0,0,0,0.72)",
+      background: "rgba(0,0,0,0.78)",
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: "20px",
+      padding: "16px",
     }}>
       <div style={{
-        background: "rgba(30,30,20,0.96)",
-        border: `1px solid rgba(255,255,255,0.18)`,
-        borderRadius: 10, padding: "24px 24px 20px",
-        width: "100%", maxWidth: "440px",
-        display: "flex", flexDirection: "column", gap: 18,
-        boxShadow: "0 8px 48px rgba(0,0,0,0.6)",
+        background: "rgba(18,18,14,0.98)",
+        border: `1px solid rgba(255,255,255,0.14)`,
+        borderRadius: 12, padding: "22px 22px 18px",
+        width: "100%", maxWidth: "420px",
+        display: "flex", flexDirection: "column", gap: 0,
+        boxShadow: "0 12px 60px rgba(0,0,0,0.7)",
+        fontFamily: MODAL_FONT,
+        maxHeight: "90vh", overflowY: "auto",
       }}>
-        <div style={{ fontFamily: t.fontTitle, color: t.chalk, fontSize: "1.25rem",
-          textAlign: "center", letterSpacing: "0.06em", opacity: 0.9 }}>
-          Set Up New Game
+        <div style={{ fontFamily: t.fontTitle, color: t.chalk, fontSize: "1.2rem",
+          textAlign: "center", letterSpacing: "0.06em", opacity: 0.9, marginBottom: 18 }}>
+          New Game
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {free.map(def => (
-            <RuleRow key={def.key} def={def} value={rules[def.key]}
-              onChange={v => onRulesChange({ ...rules, [def.key]: v })}
-              canEdit={canEdit} locked={false} t={t} />
+
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {free.map((def, i) => (
+            <div key={def.key}>
+              <RuleRow def={def} value={rules[def.key]}
+                onChange={v => onRulesChange({ ...rules, [def.key]: v })}
+                canEdit={canEdit} locked={false} t={t} />
+              {i < free.length - 1 && (
+                <div style={{ height: 1, background: `${t.chalkDim}`, opacity: 0.12, margin: "12px 0" }} />
+              )}
+            </div>
           ))}
           {locked.length > 0 && (
             <>
-              <div style={{ borderTop: `1px solid ${t.chalkDim}`, opacity: 0.2, margin: "2px 0" }} />
-              {locked.map(def => (
-                <RuleRow key={def.key} def={def} value={rules[def.key]}
-                  onChange={() => {}} canEdit={false} locked={true} t={t} />
+              <div style={{ height: 1, background: t.chalkDim, opacity: 0.2, margin: "12px 0" }} />
+              {locked.map((def, i) => (
+                <div key={def.key}>
+                  <RuleRow def={def} value={rules[def.key]}
+                    onChange={() => {}} canEdit={false} locked={true} t={t} />
+                  {i < locked.length - 1 && (
+                    <div style={{ height: 1, background: t.chalkDim, opacity: 0.12, margin: "12px 0" }} />
+                  )}
+                </div>
               ))}
             </>
           )}
-          {!canEdit && (
-            <div style={{ color: t.chalkDim, fontSize: "0.62rem", textAlign: "center", opacity: 0.6 }}>
-              Only the host (X) can change rules
-            </div>
-          )}
         </div>
-        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+
+        {!canEdit && (
+          <div style={{ color: t.chalkDim, fontFamily: MODAL_FONT, fontSize: "0.72rem",
+            textAlign: "center", marginTop: 12, opacity: 0.6 }}>
+            Only the host (X) can change rules
+          </div>
+        )}
+
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
           {onCancel && (
-            <button onClick={onCancel} style={{ ...s.btn, opacity: 0.45 }}>Cancel</button>
+            <button onClick={onCancel} style={{
+              fontFamily: MODAL_FONT, fontSize: "0.85rem",
+              color: t.chalk, background: "transparent",
+              border: `1.5px solid ${t.chalkDim}`,
+              padding: "8px 22px", cursor: "pointer", borderRadius: 4, opacity: 0.5,
+            }}>Cancel</button>
           )}
           <button onClick={onStart} style={{
-            ...s.btn, opacity: 1,
-            background: "rgba(255,255,255,0.1)",
+            fontFamily: MODAL_FONT, fontSize: "0.9rem", fontWeight: 600,
+            color: t.chalk, background: "rgba(255,255,255,0.1)",
+            border: `1.5px solid ${t.chalk}`,
+            padding: "9px 28px", cursor: "pointer", borderRadius: 4, opacity: 0.9,
           }}>Start Game</button>
         </div>
       </div>

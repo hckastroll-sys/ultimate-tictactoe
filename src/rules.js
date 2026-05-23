@@ -14,7 +14,7 @@ export const RULE_DEFS = [
   {
     key: "completedBoard",
     label: "Full board redirect",
-    description: "When your move would send the opponent to a full mini-board, choose whether that ends the game or grants them a free turn to play anywhere.",
+    description: "What happens when the next board is already full.",
     options: [
       { value: "end",       label: "End game" },
       { value: "free_turn", label: "Free turn" },
@@ -24,7 +24,7 @@ export const RULE_DEFS = [
   {
     key: "megaBonus",
     label: "Mega bonus",
-    description: "Awards +3 points to any player who wins 3 mini-boards in a row. Choose whether only the first player to do so earns the bonus, or both players earn it if each achieves their own mega win.",
+    description: "Win 3 boards in a row for +3 points.",
     options: [
       { value: "first",      label: "First only (+3)" },
       { value: "all_unique", label: "Both score (+3)" },
@@ -34,7 +34,7 @@ export const RULE_DEFS = [
   {
     key: "timeLimit",
     label: "Turn timer",
-    description: "Limits how long a player can deliberate each turn. If the clock runs out, the turn is forfeited and the opponent gets a free-choice move.",
+    description: "Per-turn time limit. Expiry forfeits the turn.",
     options: [
       { value: null, label: "Off" },
       { value: 30,   label: "30s" },
@@ -45,7 +45,7 @@ export const RULE_DEFS = [
   {
     key: "steal",
     label: "Board steal",
-    description: "Lets a player claim an opponent-owned mini-board by completing a new line in it. Stolen boards count toward the thief's mega win, adding a comeback mechanic.",
+    description: "Complete a new line in an opponent's board to claim it.",
     options: [
       { value: false, label: "Off" },
       { value: true,  label: "On"  },
@@ -56,13 +56,13 @@ export const RULE_DEFS = [
     key: "sessionPoints",
     label: "First to … pts",
     type: "number",
-    description: "End the session when a player's cumulative score across all games reaches this total. Leave blank to disable.",
+    description: "Session ends when a player's total score hits this.",
     locked: false,
   },
   {
     key: "sessionMinutes",
     label: "Session time",
-    description: "End the session after this many minutes — mid-game if necessary — with the current leader declared the winner.",
+    description: "Session ends after this many minutes. Leader wins.",
     options: [
       { value: null, label: "Off"   },
       { value: 1,    label: "1 min" },
@@ -75,8 +75,8 @@ export const RULE_DEFS = [
   },
   {
     key: "swapSides",
-    label: "Swap sides each game",
-    description: "Alternates which player moves first at the start of each new game, balancing the inherent first-move advantage over a session.",
+    label: "Swap sides",
+    description: "Alternate who moves first each game.",
     options: [
       { value: false, label: "Off" },
       { value: true,  label: "On"  },
