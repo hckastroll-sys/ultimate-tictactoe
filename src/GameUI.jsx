@@ -231,7 +231,7 @@ function NumberRuleInput({ value, onChange, canEdit, t }) {
 
   const SYS = "system-ui, -apple-system, 'Segoe UI', sans-serif";
   const btnBase = {
-    fontFamily: SYS, fontSize: "0.72rem",
+    fontFamily: SYS, fontSize: "0.78rem",
     padding: "3px 9px", borderRadius: "10px", transition: "all 0.15s",
     cursor: canEdit ? "pointer" : "default",
   };
@@ -257,7 +257,7 @@ function NumberRuleInput({ value, onChange, canEdit, t }) {
         onKeyDown={e => e.key === "Enter" && commit(draft)}
         placeholder="pts"
         style={{
-          width: "52px", fontFamily: SYS, fontSize: "0.72rem",
+          width: "52px", fontFamily: SYS, fontSize: "0.78rem",
           color: value != null ? t.chalk : t.chalkDim,
           background: value != null ? "rgba(255,255,255,0.1)" : "transparent",
           border: `1px solid ${value != null ? t.chalk : t.chalkDim}`,
@@ -278,12 +278,12 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
       gap: 12, opacity: locked ? 0.35 : 1,
     }}>
       <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
-        <span style={{ color: t.chalk, fontSize: "0.88rem", fontFamily: SYS, fontWeight: 600, lineHeight: 1.2 }}>
+        <span style={{ color: t.chalk, fontSize: "0.95rem", fontFamily: SYS, fontWeight: 600, lineHeight: 1.2 }}>
           {def.label}
           {locked && <span style={{ color: t.chalkDim, fontSize: "0.7em", fontWeight: 400, marginLeft: 5 }}>(coming soon)</span>}
         </span>
         {def.description && (
-          <span style={{ color: t.chalkDim, fontSize: "0.72rem", fontFamily: SYS, lineHeight: 1.4 }}>
+          <span style={{ color: t.chalkDim, fontSize: "0.78rem", fontFamily: SYS, lineHeight: 1.4 }}>
             {def.description}
           </span>
         )}
@@ -296,7 +296,7 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
             const active = value === opt.value;
             return (
               <button key={String(opt.value)} onClick={() => !locked && canEdit && onChange(opt.value)} style={{
-                fontFamily: SYS, fontSize: "0.72rem", fontWeight: active ? 600 : 400,
+                fontFamily: SYS, fontSize: "0.78rem", fontWeight: active ? 600 : 400,
                 color: active ? t.chalk : t.chalkDim,
                 background: active ? "rgba(255,255,255,0.12)" : "transparent",
                 border: `1px solid ${active ? t.chalk : t.chalkDim}`,
@@ -386,8 +386,9 @@ function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }
       padding: "16px",
     }}>
       <div style={{
-        background: "rgba(18,18,14,0.98)",
-        border: `1px solid rgba(255,255,255,0.14)`,
+        background: t.bg,
+        backgroundImage: t.bgGradient,
+        border: `1px solid rgba(255,255,255,0.18)`,
         borderRadius: 12, padding: "22px 22px 18px",
         width: "100%", maxWidth: "420px",
         display: "flex", flexDirection: "column", gap: 0,

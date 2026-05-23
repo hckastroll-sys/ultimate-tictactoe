@@ -126,9 +126,10 @@ export default function OnlineGame({ gameId, onBack }) {
   const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   useEffect(() => {
     sessionTimerCbRef.current = () => {
-      const w = sessionTotalPts.X > sessionTotalPts.O ? "X"
-        : sessionTotalPts.O > sessionTotalPts.X ? "O"
-        : "draw";
+      const live = calcScores(game.cells, rules, game.megaOwners);
+      const totalX = sessionTotalPts.X + live.xTotal;
+      const totalO = sessionTotalPts.O + live.oTotal;
+      const w = totalX > totalO ? "X" : totalO > totalX ? "O" : "draw";
       setSessionWinner(prev => prev || w);
       setGame(prevGame => {
         if (prevGame.gameOver) return prevGame;
