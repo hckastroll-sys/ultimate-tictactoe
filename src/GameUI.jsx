@@ -180,6 +180,10 @@ function NameInput({ player, names, onNameChange, canEdit, color, fontFamily }) 
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(names[player]);
 
+  useEffect(() => {
+    if (!editing) setDraft(names[player]);
+  }, [names[player]]);
+
   function save() {
     const trimmed = draft.trim();
     onNameChange(player, trimmed || player);
@@ -206,8 +210,10 @@ function NameInput({ player, names, onNameChange, canEdit, color, fontFamily }) 
       color, fontFamily,
       cursor: canEdit ? "pointer" : "default",
       borderBottom: canEdit ? `1px dashed ${color}55` : "none",
+      display: "inline-flex", alignItems: "center", gap: 4,
     }}>
       {names[player]}
+      {canEdit && <span style={{ fontSize: "0.6em", opacity: 0.5 }}>✎</span>}
     </span>
   );
 }

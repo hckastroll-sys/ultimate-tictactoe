@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { getSupabase, getPlayerId, generateGameId } from "./supabase";
 import { emptyGame } from "./gameLogic";
+import { DEFAULT_RULES } from "./rules";
 
 export default function Landing({ onLocal, onOnline }) {
   const [creating, setCreating] = useState(false);
@@ -13,7 +14,7 @@ export default function Landing({ onLocal, onOnline }) {
     const playerId = getPlayerId();
     const { error } = await getSupabase().from("games").insert({
       id,
-      state: { game: emptyGame(), sessionScores: { X: 0, O: 0, draw: 0 }, lastMove: null },
+      state: { game: emptyGame(), sessionScores: { X: 0, O: 0, draw: 0 }, sessionTotalPts: { X: 0, O: 0 }, lastMove: null, rules: DEFAULT_RULES, names: { X: "X", O: "O" } },
       x_player_id: playerId,
     });
     if (error) {
