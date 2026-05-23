@@ -10,6 +10,7 @@ export default function OnlineGame({ gameId, onBack }) {
   const [sessionTotalPts, setSessionTotalPts] = useState({ X: 0, O: 0 });
   const [sessionWinner, setSessionWinner] = useState(null);
   const [sessionVersion, setSessionVersion] = useState(0);
+  const [sessionTimerActive, setSessionTimerActive] = useState(false);
   const [lastMove, setLastMove] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
@@ -140,7 +141,7 @@ export default function OnlineGame({ gameId, onBack }) {
     };
   });
   useEffect(() => {
-    if (!rules.sessionMinutes) { setSessionTimeLeft(null); return; }
+    if (!rules.sessionMinutes || !sessionTimerActive) { setSessionTimeLeft(null); return; }
     const totalSecs = rules.sessionMinutes * 60;
     sessionStartRef.current = Date.now();
     setSessionTimeLeft(totalSecs);
@@ -152,7 +153,7 @@ export default function OnlineGame({ gameId, onBack }) {
     }, 500);
     const endId = setTimeout(() => sessionTimerCbRef.current(), totalSecs * 1000);
     return () => { clearInterval(displayId); clearTimeout(endId); };
-  }, [rules.sessionMinutes, sessionVersion]);
+  }, [rules.sessionMinutes, sessionVersion, sessionTimerActive]);
 
   useEffect(() => {
     clearInterval(timerRef.current);
@@ -182,6 +183,7 @@ export default function OnlineGame({ gameId, onBack }) {
     if (myRole && game.currentPlayer !== myRole) return;
     const result = applyMove(game, mb, c, rules);
     if (!result) return;
+    if (!sessionTimerActive) setSessionTimerActive(true);
 
     let newSessionScores = sessionScores;
     let newSessionTotalPts = sessionTotalPts;
@@ -231,6 +233,7 @@ export default function OnlineGame({ gameId, onBack }) {
     setSessionScores(freshScores);
     setSessionTotalPts(freshPts);
     setSessionWinner(null);
+    setSessionTimerActive(false);
     setLastMove(null);
     setSessionVersion(v => v + 1);
     pushState(fresh, freshScores, freshPts, null, rules, names);

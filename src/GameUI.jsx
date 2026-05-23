@@ -370,6 +370,63 @@ function RulesPanel({ rules, onRulesChange, canEdit, gameInProgress, t, s }) {
   );
 }
 
+function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }) {
+  const free = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
+  const locked = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 200,
+      background: "rgba(0,0,0,0.72)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: "20px",
+    }}>
+      <div style={{
+        background: "rgba(30,30,20,0.96)",
+        border: `1px solid rgba(255,255,255,0.18)`,
+        borderRadius: 10, padding: "24px 24px 20px",
+        width: "100%", maxWidth: "440px",
+        display: "flex", flexDirection: "column", gap: 18,
+        boxShadow: "0 8px 48px rgba(0,0,0,0.6)",
+      }}>
+        <div style={{ fontFamily: t.fontTitle, color: t.chalk, fontSize: "1.25rem",
+          textAlign: "center", letterSpacing: "0.06em", opacity: 0.9 }}>
+          Set Up New Game
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {free.map(def => (
+            <RuleRow key={def.key} def={def} value={rules[def.key]}
+              onChange={v => onRulesChange({ ...rules, [def.key]: v })}
+              canEdit={canEdit} locked={false} t={t} />
+          ))}
+          {locked.length > 0 && (
+            <>
+              <div style={{ borderTop: `1px solid ${t.chalkDim}`, opacity: 0.2, margin: "2px 0" }} />
+              {locked.map(def => (
+                <RuleRow key={def.key} def={def} value={rules[def.key]}
+                  onChange={() => {}} canEdit={false} locked={true} t={t} />
+              ))}
+            </>
+          )}
+          {!canEdit && (
+            <div style={{ color: t.chalkDim, fontSize: "0.62rem", textAlign: "center", opacity: 0.6 }}>
+              Only the host (X) can change rules
+            </div>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+          {onCancel && (
+            <button onClick={onCancel} style={{ ...s.btn, opacity: 0.45 }}>Cancel</button>
+          )}
+          <button onClick={onStart} style={{
+            ...s.btn, opacity: 1,
+            background: "rgba(255,255,255,0.1)",
+          }}>Start Game</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function GameUI({
   game, sessionScores, lastMove, animKey,
   onMove, onNewGame, onResetAll,
@@ -381,6 +438,7 @@ export default function GameUI({
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
+  const [showNewGameModal, setShowNewGameModal] = useState(false);
 
   const { cells, currentPlayer, activeBoard, gameOver, megaOwners } = game;
   const isOver = gameOver;
@@ -577,10 +635,10 @@ export default function GameUI({
             })}
           </div>
 
-          <RulesPanel rules={rules} onRulesChange={onRulesChange} canEdit={canEditRules} gameInProgress={gameInProgress} t={t} s={s} />
-
           <div style={s.buttons}>
-            {!sessionWinner && <button onClick={onNewGame} style={s.btn}>New Game</button>}
+            {!sessionWinner && (
+              <button onClick={() => setShowNewGameModal(true)} style={s.btn}>New Game</button>
+            )}
             <button onClick={onResetAll} style={{ ...s.btn, opacity: sessionWinner ? 0.85 : 0.3, borderColor: sessionWinner ? t.chalk : t.chalkDim }}>
               {sessionWinner ? "New Session" : "Reset All"}
             </button>
@@ -590,6 +648,17 @@ export default function GameUI({
           </div>
         </div>
       </div>
+
+      {showNewGameModal && (
+        <NewGameModal
+          rules={rules}
+          onRulesChange={onRulesChange}
+          canEdit={canEditRules}
+          onStart={() => { onNewGame(); setShowNewGameModal(false); }}
+          onCancel={lastMove || isOver ? () => setShowNewGameModal(false) : null}
+          t={t} s={s}
+        />
+      )}
 
       <style>{`
         * { box-sizing: border-box; }

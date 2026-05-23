@@ -9,6 +9,7 @@ export default function LocalGame({ onBack }) {
   const [sessionTotalPts, setSessionTotalPts] = useState({ X: 0, O: 0 });
   const [sessionWinner, setSessionWinner] = useState(null);
   const [sessionVersion, setSessionVersion] = useState(0);
+  const [sessionTimerActive, setSessionTimerActive] = useState(false);
   const [lastMove, setLastMove] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
@@ -39,7 +40,7 @@ export default function LocalGame({ onBack }) {
     };
   });
   useEffect(() => {
-    if (!rules.sessionMinutes) { setSessionTimeLeft(null); return; }
+    if (!rules.sessionMinutes || !sessionTimerActive) { setSessionTimeLeft(null); return; }
     const totalSecs = rules.sessionMinutes * 60;
     sessionStartRef.current = Date.now();
     setSessionTimeLeft(totalSecs);
@@ -51,7 +52,7 @@ export default function LocalGame({ onBack }) {
     }, 500);
     const endId = setTimeout(() => sessionTimerCbRef.current(), totalSecs * 1000);
     return () => { clearInterval(displayId); clearTimeout(endId); };
-  }, [rules.sessionMinutes, sessionVersion]);
+  }, [rules.sessionMinutes, sessionVersion, sessionTimerActive]);
 
   // Turn timer: starts after the first move (lastMove non-null), resets each turn
   useEffect(() => {
@@ -77,6 +78,7 @@ export default function LocalGame({ onBack }) {
   function makeMove(mb, c) {
     const result = applyMove(game, mb, c, rules);
     if (!result) return;
+    if (!sessionTimerActive) setSessionTimerActive(true);
 
     let newSessionScores = sessionScores;
     let newSessionTotalPts = sessionTotalPts;
@@ -120,6 +122,7 @@ export default function LocalGame({ onBack }) {
     setSessionScores({ X: 0, O: 0, draw: 0 });
     setSessionTotalPts({ X: 0, O: 0 });
     setSessionWinner(null);
+    setSessionTimerActive(false);
     setLastMove(null);
     setAnimKey(k => k + 1);
     setSessionVersion(v => v + 1);
