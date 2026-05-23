@@ -5,7 +5,8 @@ export const DEFAULT_RULES = {
   megaBonus: "first",      // "first" | "all_unique"
   timeLimit: null,         // null | 30 | 60  (locked)
   steal: false,            // (locked)
-  firstToN: null,          // null | 3 | 5    (locked)
+  sessionPoints: null,     // null | number — cumulative score threshold
+  sessionMinutes: null,    // null | 1 | 2 | 3 | 4 | 5
   swapSides: false,        // (locked)
 };
 
@@ -52,15 +53,25 @@ export const RULE_DEFS = [
     locked: true,
   },
   {
-    key: "firstToN",
-    label: "Session ends",
-    description: "Ends the session once one player reaches the target number of individual game wins, crowning an overall session champion.",
+    key: "sessionPoints",
+    label: "First to … pts",
+    type: "number",
+    description: "End the session when a player's cumulative score across all games reaches this total. Leave blank to disable.",
+    locked: false,
+  },
+  {
+    key: "sessionMinutes",
+    label: "Session time",
+    description: "End the session after this many minutes — mid-game if necessary — with the current leader declared the winner.",
     options: [
-      { value: null, label: "Never"      },
-      { value: 3,    label: "First to 3" },
-      { value: 5,    label: "First to 5" },
+      { value: null, label: "Off"   },
+      { value: 1,    label: "1 min" },
+      { value: 2,    label: "2 min" },
+      { value: 3,    label: "3 min" },
+      { value: 4,    label: "4 min" },
+      { value: 5,    label: "5 min" },
     ],
-    locked: true,
+    locked: false,
   },
   {
     key: "swapSides",

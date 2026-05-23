@@ -212,6 +212,63 @@ function NameInput({ player, names, onNameChange, canEdit, color, fontFamily }) 
   );
 }
 
+function NumberRuleInput({ value, onChange, canEdit, t }) {
+  const [draft, setDraft] = useState(value != null ? String(value) : "");
+
+  useEffect(() => {
+    setDraft(value != null ? String(value) : "");
+  }, [value]);
+
+  function commit(raw) {
+    const n = parseInt(raw, 10);
+    if (!raw.trim() || isNaN(n) || n <= 0) {
+      onChange(null);
+    } else {
+      onChange(n);
+      setDraft(String(n));
+    }
+  }
+
+  const btnBase = {
+    fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
+    padding: "2px 7px", borderRadius: "10px", transition: "all 0.15s",
+    cursor: canEdit ? "pointer" : "default",
+  };
+
+  return (
+    <div style={{ display: "flex", gap: 3, alignItems: "center" }}>
+      <button
+        onClick={() => canEdit && onChange(null)}
+        style={{
+          ...btnBase,
+          color: value == null ? t.chalk : t.chalkDim,
+          background: value == null ? "rgba(255,255,255,0.1)" : "transparent",
+          border: `1px solid ${value == null ? t.chalk : t.chalkDim}`,
+          opacity: value == null ? 1 : 0.55,
+        }}
+      >Off</button>
+      <input
+        type="number" min="1"
+        value={draft}
+        disabled={!canEdit}
+        onChange={e => setDraft(e.target.value)}
+        onBlur={() => commit(draft)}
+        onKeyDown={e => e.key === "Enter" && commit(draft)}
+        placeholder="pts"
+        style={{
+          width: "46px", fontFamily: "inherit", fontSize: "0.64rem",
+          color: value != null ? t.chalk : t.chalkDim,
+          background: value != null ? "rgba(255,255,255,0.1)" : "transparent",
+          border: `1px solid ${value != null ? t.chalk : t.chalkDim}`,
+          padding: "2px 5px", borderRadius: "10px", textAlign: "center",
+          outline: "none", opacity: value != null ? 1 : 0.55,
+          MozAppearance: "textfield",
+        }}
+      />
+    </div>
+  );
+}
+
 function RuleRow({ def, value, onChange, canEdit, locked, t }) {
   return (
     <div style={{
@@ -229,22 +286,26 @@ function RuleRow({ def, value, onChange, canEdit, locked, t }) {
           </span>
         )}
       </div>
-      <div style={{ display: "flex", gap: 3 }}>
-        {def.options.map(opt => {
-          const active = value === opt.value;
-          return (
-            <button key={String(opt.value)} onClick={() => !locked && canEdit && onChange(opt.value)} style={{
-              fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
-              color: active ? t.chalk : t.chalkDim,
-              background: active ? "rgba(255,255,255,0.1)" : "transparent",
-              border: `1px solid ${active ? t.chalk : t.chalkDim}`,
-              padding: "2px 7px", borderRadius: "10px",
-              cursor: !locked && canEdit ? "pointer" : "default",
-              opacity: active ? 1 : 0.55, transition: "all 0.15s",
-            }}>{opt.label}</button>
-          );
-        })}
-      </div>
+      {def.type === "number" ? (
+        <NumberRuleInput value={value} onChange={!locked && canEdit ? onChange : () => {}} canEdit={!locked && canEdit} t={t} />
+      ) : (
+        <div style={{ display: "flex", gap: 3 }}>
+          {def.options.map(opt => {
+            const active = value === opt.value;
+            return (
+              <button key={String(opt.value)} onClick={() => !locked && canEdit && onChange(opt.value)} style={{
+                fontFamily: "inherit", fontSize: "0.64rem", letterSpacing: "0.03em",
+                color: active ? t.chalk : t.chalkDim,
+                background: active ? "rgba(255,255,255,0.1)" : "transparent",
+                border: `1px solid ${active ? t.chalk : t.chalkDim}`,
+                padding: "2px 7px", borderRadius: "10px",
+                cursor: !locked && canEdit ? "pointer" : "default",
+                opacity: active ? 1 : 0.55, transition: "all 0.15s",
+              }}>{opt.label}</button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -514,6 +575,8 @@ export default function GameUI({
           0%   { box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.55), 0 0 14px rgba(255,255,255,0.25); }
           100% { box-shadow: none; }
         }
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
       `}</style>
     </div>
   );

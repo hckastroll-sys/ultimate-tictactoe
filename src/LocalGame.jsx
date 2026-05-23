@@ -6,7 +6,9 @@ import { DEFAULT_RULES } from "./rules";
 export default function LocalGame({ onBack }) {
   const [game, setGame] = useState(emptyGame());
   const [sessionScores, setSessionScores] = useState({ X: 0, O: 0, draw: 0 });
+  const [sessionTotalPts, setSessionTotalPts] = useState({ X: 0, O: 0 });
   const [sessionWinner, setSessionWinner] = useState(null);
+  const [sessionVersion, setSessionVersion] = useState(0);
   const [lastMove, setLastMove] = useState(null);
   const [animKey, setAnimKey] = useState(0);
   const [themeKey, setThemeKey] = useState(() => localStorage.getItem("uttt-theme") || "chalkboard");
@@ -14,14 +16,33 @@ export default function LocalGame({ onBack }) {
   const [names, setNames] = useState({ X: "X", O: "O" });
   const [timeLeft, setTimeLeft] = useState(null);
   const timerRef = useRef(null);
-  const swapFlagRef = useRef(false); // tracks alternating starter for swapSides
+  const swapFlagRef = useRef(false);
 
   function handleThemeChange(key) {
     setThemeKey(key);
     localStorage.setItem("uttt-theme", key);
   }
 
-  // Timer: starts after the first move (lastMove non-null), resets each turn
+  // Session timer: fires after sessionMinutes, ends game + session immediately
+  const sessionTimerCbRef = useRef(null);
+  useEffect(() => {
+    sessionTimerCbRef.current = () => {
+      const w = sessionScores.X > sessionScores.O ? "X"
+        : sessionScores.O > sessionScores.X ? "O"
+        : sessionTotalPts.X > sessionTotalPts.O ? "X"
+        : sessionTotalPts.O > sessionTotalPts.X ? "O"
+        : "draw";
+      setSessionWinner(prev => prev || w);
+      setGame(g => g.gameOver ? g : { ...g, gameOver: true });
+    };
+  });
+  useEffect(() => {
+    if (!rules.sessionMinutes) return;
+    const id = setTimeout(() => sessionTimerCbRef.current(), rules.sessionMinutes * 60000);
+    return () => clearTimeout(id);
+  }, [rules.sessionMinutes, sessionVersion]);
+
+  // Turn timer: starts after the first move (lastMove non-null), resets each turn
   useEffect(() => {
     clearInterval(timerRef.current);
     if (!rules.timeLimit || game.gameOver || !lastMove) { setTimeLeft(null); return; }
@@ -47,13 +68,22 @@ export default function LocalGame({ onBack }) {
     if (!result) return;
 
     let newSessionScores = sessionScores;
+    let newSessionTotalPts = sessionTotalPts;
     if (result.gameEnded) {
       const s = calcScores(result.newGame.cells, rules, result.newGame.megaOwners);
       const w = s.xTotal > s.oTotal ? "X" : s.oTotal > s.xTotal ? "O" : "draw";
       newSessionScores = { ...sessionScores, [w]: sessionScores[w] + 1 };
+      newSessionTotalPts = { X: sessionTotalPts.X + s.xTotal, O: sessionTotalPts.O + s.oTotal };
       setSessionScores(newSessionScores);
-      if (rules.firstToN && w !== "draw" && newSessionScores[w] >= rules.firstToN) {
-        setSessionWinner(w);
+      setSessionTotalPts(newSessionTotalPts);
+      if (rules.sessionPoints) {
+        if (newSessionTotalPts.X >= rules.sessionPoints && newSessionTotalPts.O >= rules.sessionPoints) {
+          setSessionWinner(newSessionTotalPts.X >= newSessionTotalPts.O ? "X" : "O");
+        } else if (newSessionTotalPts.X >= rules.sessionPoints) {
+          setSessionWinner("X");
+        } else if (newSessionTotalPts.O >= rules.sessionPoints) {
+          setSessionWinner("O");
+        }
       }
     }
 
@@ -77,9 +107,11 @@ export default function LocalGame({ onBack }) {
     swapFlagRef.current = false;
     setGame(emptyGame());
     setSessionScores({ X: 0, O: 0, draw: 0 });
+    setSessionTotalPts({ X: 0, O: 0 });
     setSessionWinner(null);
     setLastMove(null);
     setAnimKey(k => k + 1);
+    setSessionVersion(v => v + 1);
   }
 
   const gameInProgress = lastMove !== null && !game.gameOver;
