@@ -375,9 +375,53 @@ function RulesPanel({ rules, onRulesChange, canEdit, gameInProgress, t, s }) {
 
 const MODAL_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
-function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }) {
-  const free = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
-  const locked = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
+function ModalRuleRow({ def, value, onRulesChange, canEdit, t }) {
+  const editable = canEdit && !def.locked;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      gap: 12, padding: "11px 0",
+      borderBottom: `1px solid rgba(255,255,255,0.07)`,
+      opacity: def.locked ? 0.38 : 1,
+    }}>
+      <span style={{ color: t.chalk, fontFamily: MODAL_FONT, fontSize: "0.92rem", fontWeight: 600, flexShrink: 0 }}>
+        {def.label}
+        {def.locked && <span style={{ color: t.chalkDim, fontWeight: 400, fontSize: "0.72em", marginLeft: 6 }}>soon</span>}
+      </span>
+      {def.type === "number" ? (
+        <NumberRuleInput
+          value={value}
+          onChange={editable ? v => onRulesChange(v) : () => {}}
+          canEdit={editable} t={t}
+        />
+      ) : (
+        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          {def.options.map(opt => {
+            const active = value === opt.value;
+            return (
+              <button key={String(opt.value)}
+                onClick={() => editable && onRulesChange(opt.value)}
+                style={{
+                  fontFamily: MODAL_FONT, fontSize: "0.8rem", fontWeight: active ? 700 : 400,
+                  color: active ? t.chalk : t.chalkDim,
+                  background: active ? "rgba(255,255,255,0.14)" : "transparent",
+                  border: `1.5px solid ${active ? t.chalk : t.chalkDim}`,
+                  padding: "4px 12px", borderRadius: 6,
+                  cursor: editable ? "pointer" : "default",
+                  opacity: active ? 1 : 0.52, transition: "all 0.15s",
+                  whiteSpace: "nowrap",
+                }}>{opt.label}</button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t }) {
+  const allDefs = RULE_DEFS.filter(d => !d.locked || UNLOCK_ALL);
+  const lockedDefs = RULE_DEFS.filter(d => d.locked && !UNLOCK_ALL);
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 200,
@@ -388,41 +432,37 @@ function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }
       <div style={{
         background: t.bg,
         backgroundImage: t.bgGradient,
-        border: `1px solid rgba(255,255,255,0.18)`,
-        borderRadius: 12, padding: "22px 22px 18px",
-        width: "100%", maxWidth: "420px",
-        display: "flex", flexDirection: "column", gap: 0,
-        boxShadow: "0 12px 60px rgba(0,0,0,0.7)",
+        border: `1px solid rgba(255,255,255,0.16)`,
+        borderRadius: 14,
+        width: "100%", maxWidth: "400px",
+        boxShadow: "0 16px 64px rgba(0,0,0,0.75)",
         fontFamily: MODAL_FONT,
-        maxHeight: "90vh", overflowY: "auto",
+        maxHeight: "92vh", overflowY: "auto",
+        display: "flex", flexDirection: "column",
       }}>
-        <div style={{ fontFamily: t.fontTitle, color: t.chalk, fontSize: "1.2rem",
-          textAlign: "center", letterSpacing: "0.06em", opacity: 0.9, marginBottom: 18 }}>
+        {/* Header */}
+        <div style={{
+          padding: "18px 22px 0",
+          fontFamily: t.fontTitle, color: t.chalk,
+          fontSize: "1.25rem", textAlign: "center",
+          letterSpacing: "0.06em", opacity: 0.9,
+        }}>
           New Game
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {free.map((def, i) => (
-            <div key={def.key}>
-              <RuleRow def={def} value={rules[def.key]}
-                onChange={v => onRulesChange({ ...rules, [def.key]: v })}
-                canEdit={canEdit} locked={false} t={t} />
-              {i < free.length - 1 && (
-                <div style={{ height: 1, background: `${t.chalkDim}`, opacity: 0.12, margin: "12px 0" }} />
-              )}
-            </div>
+        {/* Rules list */}
+        <div style={{ padding: "6px 22px 0" }}>
+          {allDefs.map(def => (
+            <ModalRuleRow key={def.key} def={def} value={rules[def.key]}
+              onRulesChange={v => onRulesChange({ ...rules, [def.key]: v })}
+              canEdit={canEdit} t={t} />
           ))}
-          {locked.length > 0 && (
+          {lockedDefs.length > 0 && (
             <>
-              <div style={{ height: 1, background: t.chalkDim, opacity: 0.2, margin: "12px 0" }} />
-              {locked.map((def, i) => (
-                <div key={def.key}>
-                  <RuleRow def={def} value={rules[def.key]}
-                    onChange={() => {}} canEdit={false} locked={true} t={t} />
-                  {i < locked.length - 1 && (
-                    <div style={{ height: 1, background: t.chalkDim, opacity: 0.12, margin: "12px 0" }} />
-                  )}
-                </div>
+              <div style={{ height: 1, background: t.chalkDim, opacity: 0.18, margin: "4px 0" }} />
+              {lockedDefs.map(def => (
+                <ModalRuleRow key={def.key} def={def} value={rules[def.key]}
+                  onRulesChange={() => {}} canEdit={false} t={t} />
               ))}
             </>
           )}
@@ -430,25 +470,26 @@ function NewGameModal({ rules, onRulesChange, canEdit, onStart, onCancel, t, s }
 
         {!canEdit && (
           <div style={{ color: t.chalkDim, fontFamily: MODAL_FONT, fontSize: "0.72rem",
-            textAlign: "center", marginTop: 12, opacity: 0.6 }}>
+            textAlign: "center", padding: "10px 22px 0", opacity: 0.6 }}>
             Only the host (X) can change rules
           </div>
         )}
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 20 }}>
+        {/* Footer buttons */}
+        <div style={{ display: "flex", gap: 10, justifyContent: "center", padding: "18px 22px 20px" }}>
           {onCancel && (
             <button onClick={onCancel} style={{
-              fontFamily: MODAL_FONT, fontSize: "0.85rem",
+              fontFamily: MODAL_FONT, fontSize: "0.88rem",
               color: t.chalk, background: "transparent",
               border: `1.5px solid ${t.chalkDim}`,
-              padding: "8px 22px", cursor: "pointer", borderRadius: 4, opacity: 0.5,
+              padding: "9px 22px", cursor: "pointer", borderRadius: 7, opacity: 0.48,
             }}>Cancel</button>
           )}
           <button onClick={onStart} style={{
-            fontFamily: MODAL_FONT, fontSize: "0.9rem", fontWeight: 600,
-            color: t.chalk, background: "rgba(255,255,255,0.1)",
+            fontFamily: MODAL_FONT, fontSize: "0.95rem", fontWeight: 700,
+            color: t.chalk, background: "rgba(255,255,255,0.12)",
             border: `1.5px solid ${t.chalk}`,
-            padding: "9px 28px", cursor: "pointer", borderRadius: 4, opacity: 0.9,
+            padding: "10px 32px", cursor: "pointer", borderRadius: 7, opacity: 0.95,
           }}>Start Game</button>
         </div>
       </div>
