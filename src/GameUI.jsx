@@ -376,17 +376,18 @@ function RulesPanel({ rules, onRulesChange, canEdit, gameInProgress, t, s }) {
 const MODAL_FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
 function ModalRuleRow({ def, value, onRulesChange, canEdit, t }) {
-  const editable = canEdit && !def.locked;
+  const isLocked = def.locked && !UNLOCK_ALL;
+  const editable = canEdit && !isLocked;
   return (
     <div style={{
       display: "flex", alignItems: "center", justifyContent: "space-between",
       gap: 12, padding: "11px 0",
       borderBottom: `1px solid rgba(255,255,255,0.07)`,
-      opacity: def.locked ? 0.38 : 1,
+      opacity: isLocked ? 0.38 : 1,
     }}>
       <span style={{ color: t.chalk, fontFamily: MODAL_FONT, fontSize: "0.92rem", fontWeight: 600, flexShrink: 0 }}>
         {def.label}
-        {def.locked && <span style={{ color: t.chalkDim, fontWeight: 400, fontSize: "0.72em", marginLeft: 6 }}>soon</span>}
+        {isLocked && <span style={{ color: t.chalkDim, fontWeight: 400, fontSize: "0.72em", marginLeft: 6 }}>soon</span>}
       </span>
       {def.type === "number" ? (
         <NumberRuleInput

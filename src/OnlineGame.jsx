@@ -193,21 +193,25 @@ export default function OnlineGame({ gameId, onBack }) {
       newSessionTotalPts = { X: sessionTotalPts.X + s.xTotal, O: sessionTotalPts.O + s.oTotal };
       setSessionScores(newSessionScores);
       setSessionTotalPts(newSessionTotalPts);
-      if (rules.sessionPoints) {
-        if (newSessionTotalPts.X >= rules.sessionPoints && newSessionTotalPts.O >= rules.sessionPoints) {
-          setSessionWinner(newSessionTotalPts.X >= newSessionTotalPts.O ? "X" : "O");
-        } else if (newSessionTotalPts.X >= rules.sessionPoints) {
-          setSessionWinner("X");
-        } else if (newSessionTotalPts.O >= rules.sessionPoints) {
-          setSessionWinner("O");
-        }
+    }
+
+    let finalGame = result.newGame;
+    if (rules.sessionPoints) {
+      const cumX = result.gameEnded ? newSessionTotalPts.X
+        : sessionTotalPts.X + calcScores(finalGame.cells, rules, finalGame.megaOwners).xTotal;
+      const cumO = result.gameEnded ? newSessionTotalPts.O
+        : sessionTotalPts.O + calcScores(finalGame.cells, rules, finalGame.megaOwners).oTotal;
+      if (cumX >= rules.sessionPoints || cumO >= rules.sessionPoints) {
+        const w = cumX > cumO ? "X" : cumO > cumX ? "O" : "draw";
+        setSessionWinner(w);
+        finalGame = { ...finalGame, gameOver: true };
       }
     }
 
     const newLastMove = { mb, c };
-    setGame(result.newGame);
+    setGame(finalGame);
     setLastMove(newLastMove);
-    pushState(result.newGame, newSessionScores, newSessionTotalPts, newLastMove, rules, names);
+    pushState(finalGame, newSessionScores, newSessionTotalPts, newLastMove, rules, names);
   }
 
   function newGame() {
