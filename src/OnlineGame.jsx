@@ -121,6 +121,8 @@ export default function OnlineGame({ gameId, onBack }) {
   });
 
   const sessionTimerCbRef = useRef(null);
+  const sessionStartRef = useRef(null);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   useEffect(() => {
     sessionTimerCbRef.current = () => {
       const w = sessionScores.X > sessionScores.O ? "X"
@@ -138,9 +140,18 @@ export default function OnlineGame({ gameId, onBack }) {
     };
   });
   useEffect(() => {
-    if (!rules.sessionMinutes) return;
-    const id = setTimeout(() => sessionTimerCbRef.current(), rules.sessionMinutes * 60000);
-    return () => clearTimeout(id);
+    if (!rules.sessionMinutes) { setSessionTimeLeft(null); return; }
+    const totalSecs = rules.sessionMinutes * 60;
+    sessionStartRef.current = Date.now();
+    setSessionTimeLeft(totalSecs);
+    const displayId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+      const remaining = Math.max(0, totalSecs - elapsed);
+      setSessionTimeLeft(remaining);
+      if (remaining === 0) clearInterval(displayId);
+    }, 500);
+    const endId = setTimeout(() => sessionTimerCbRef.current(), totalSecs * 1000);
+    return () => { clearInterval(displayId); clearTimeout(endId); };
   }, [rules.sessionMinutes, sessionVersion]);
 
   useEffect(() => {
@@ -281,6 +292,7 @@ export default function OnlineGame({ gameId, onBack }) {
       onNameChange={handleNameChange}
       canEditNames={{ X: myRole === "X", O: myRole === "O" }}
       timeLeft={timeLeft}
+      sessionTimeLeft={sessionTimeLeft}
       onBack={onBack}
     />
   );

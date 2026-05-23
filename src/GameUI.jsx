@@ -377,7 +377,7 @@ export default function GameUI({
   myRole = null, isWaiting = false, shareUrl = null, onCopyLink, onBack,
   rules = DEFAULT_RULES, onRulesChange = () => {}, canEditRules = true,
   names = { X: "X", O: "O" }, onNameChange = () => {}, canEditNames = { X: true, O: true },
-  timeLeft = null, sessionWinner = null, gameInProgress = false,
+  timeLeft = null, sessionWinner = null, gameInProgress = false, sessionTimeLeft = null,
 }) {
   const t = THEMES[themeKey];
   const s = buildStyles(t);
@@ -394,8 +394,13 @@ export default function GameUI({
 
   let statusText, statusColor;
   if (sessionWinner) {
-    statusText = `${names[sessionWinner]} wins the session!`;
-    statusColor = sessionWinner === "X" ? t.xColor : t.oColor;
+    if (sessionWinner === "draw") {
+      statusText = "Session ends in a draw!";
+      statusColor = t.chalkDim;
+    } else {
+      statusText = `${names[sessionWinner]} wins the session!`;
+      statusColor = sessionWinner === "X" ? t.xColor : t.oColor;
+    }
   } else if (isWaiting) {
     statusText = "Waiting for opponent…";
     statusColor = t.chalkDim;
@@ -432,6 +437,28 @@ export default function GameUI({
 
         <div style={s.statusArea}>
           <div style={{ ...s.status, color: statusColor }}>{statusText}</div>
+          {sessionTimeLeft !== null && !sessionWinner && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+              <span style={{
+                fontFamily: t.fontTitle,
+                fontSize: "clamp(1.3rem, 4.5vw, 1.75rem)",
+                letterSpacing: "0.06em",
+                color: sessionTimeLeft <= 10 ? "#ff5555" : sessionTimeLeft <= 30 ? "#ffaa44" : t.chalk,
+                transition: "color 0.6s",
+              }}>
+                {Math.floor(sessionTimeLeft / 60)}:{String(sessionTimeLeft % 60).padStart(2, "0")}
+              </span>
+              <div style={{ width: "min(80vw, 340px)", height: 2, background: "rgba(255,255,255,0.08)", borderRadius: 2 }}>
+                <div style={{
+                  height: "100%", borderRadius: 2,
+                  width: `${(sessionTimeLeft / (rules.sessionMinutes * 60)) * 100}%`,
+                  background: sessionTimeLeft <= 10 ? "#ff5555" : sessionTimeLeft <= 30 ? "#ffaa44" : t.chalk,
+                  transition: "width 0.5s linear, background 0.6s",
+                }} />
+              </div>
+              <span style={{ color: t.chalkDim, fontSize: "0.6rem", letterSpacing: "0.05em", opacity: 0.6 }}>session</span>
+            </div>
+          )}
           {hintText && <div style={s.hint}>{hintText}</div>}
           {timeLeft !== null && !isOver && !isWaiting && (
             <div style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, marginTop: 2 }}>

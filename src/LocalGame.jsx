@@ -23,8 +23,10 @@ export default function LocalGame({ onBack }) {
     localStorage.setItem("uttt-theme", key);
   }
 
-  // Session timer: fires after sessionMinutes, ends game + session immediately
+  // Session timer: countdown display + fires after sessionMinutes to end game + session
   const sessionTimerCbRef = useRef(null);
+  const sessionStartRef = useRef(null);
+  const [sessionTimeLeft, setSessionTimeLeft] = useState(null);
   useEffect(() => {
     sessionTimerCbRef.current = () => {
       const w = sessionScores.X > sessionScores.O ? "X"
@@ -37,9 +39,18 @@ export default function LocalGame({ onBack }) {
     };
   });
   useEffect(() => {
-    if (!rules.sessionMinutes) return;
-    const id = setTimeout(() => sessionTimerCbRef.current(), rules.sessionMinutes * 60000);
-    return () => clearTimeout(id);
+    if (!rules.sessionMinutes) { setSessionTimeLeft(null); return; }
+    const totalSecs = rules.sessionMinutes * 60;
+    sessionStartRef.current = Date.now();
+    setSessionTimeLeft(totalSecs);
+    const displayId = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
+      const remaining = Math.max(0, totalSecs - elapsed);
+      setSessionTimeLeft(remaining);
+      if (remaining === 0) clearInterval(displayId);
+    }, 500);
+    const endId = setTimeout(() => sessionTimerCbRef.current(), totalSecs * 1000);
+    return () => { clearInterval(displayId); clearTimeout(endId); };
   }, [rules.sessionMinutes, sessionVersion]);
 
   // Turn timer: starts after the first move (lastMove non-null), resets each turn
@@ -136,6 +147,7 @@ export default function LocalGame({ onBack }) {
       onNameChange={(player, name) => setNames(prev => ({ ...prev, [player]: name }))}
       canEditNames={{ X: true, O: true }}
       timeLeft={timeLeft}
+      sessionTimeLeft={sessionTimeLeft}
       onBack={onBack}
     />
   );
