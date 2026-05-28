@@ -118,7 +118,8 @@ export function applyMove(game, mb, c, rules) {
 
   const nextPlayer = currentPlayer === "X" ? "O" : "X";
   const targetFull = isFull(newCells[c]);
-  const gameEnds = targetFull && (rules?.completedBoard ?? "end") === "end";
+  const allBoardsFull = newCells.every(isFull);
+  const gameEnds = allBoardsFull || (targetFull && (rules?.completedBoard ?? "end") === "end");
 
   return {
     newGame: {
